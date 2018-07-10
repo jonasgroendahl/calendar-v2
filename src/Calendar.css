@@ -1,0 +1,14 @@
+:root {
+  --eventColor: #ff9800;
+  --eventCycling: #0091ea;
+}
+
+#calendar .fc-event {
+  padding: 3px;
+  background: var(--eventColor);
+  border-color: var(--eventColor);
+}
+
+#calendar .fc-event .fc-bg {
+  opacity: 0;
+}
