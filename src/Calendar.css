@@ -12,3 +12,36 @@
 #calendar .fc-event .fc-bg {
   opacity: 0;
 }
+
+/* Hover CSS */
+/*
+#calendar
+  .fc-time-grid.fc-unselectable
+  tbody
+  tr
+  td.fc-widget-content:nth-child(4) {
+  transform: scale(1.5, 1);
+  transition: all 0.3s ease-in;
+}
+
+.fc-content-skeleton td:nth-child(4) div.fc-content-col {
+  width: 208px;
+  left: -35px;
+}
+
+#calendar
+  .fc-content-skeleton
+  td:nth-child(4)
+  .fc-event-container:nth-child(2) {
+  z-index: 5;
+}
+
+#calendar .fc-content-skeleton td:nth-child(4) .fc-event {
+  width: 100%;
+}
+
+#calendar .fc-content-skeleton td:not(:nth-child(4)) .fc-event {
+  background-color: rgba(238, 238, 238, 0.623) !important;
+  border-color: rgba(238, 238, 238, 0.623) !important;
+}
+*/

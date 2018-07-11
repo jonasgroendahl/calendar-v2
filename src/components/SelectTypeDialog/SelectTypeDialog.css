@@ -1,0 +1,4 @@
+.select-type-dialog > div:nth-child(2) {
+  background: transparent;
+  flex-direction: row;
+}
