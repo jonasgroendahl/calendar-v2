@@ -1,10 +1,10 @@
 import React, { Component } from "react";
-import logo from "./logo.svg";
-import axios from "axios";
+import axios from "./axios";
 import "./App.css";
 import "./Calendar.css";
 import "fullcalendar/dist/fullcalendar.min.css";
-import { Calendar } from "fullcalendar";
+import { Calendar, moment } from "fullcalendar";
+import dragula from 'fullcalendar/dist/dragula.min.js';
 import {
   Drawer,
   List,
@@ -19,11 +19,24 @@ import {
   Grid,
   Select,
   MenuItem,
-  InputLabel
+  InputLabel,
+  ListItemText,
+  Avatar,
+  Card,
+  Popper,
+  CardContent,
+  CardActions,
+  Backdrop,
+  ClickAwayListener,
+  Zoom,
+  Grow,
+  Switch,
+  FormControlLabel
 } from "@material-ui/core";
-import { ChevronRight, Layers, Search, Cloud } from "@material-ui/icons";
+import { ChevronRight, Layers, Search, Cloud, Delete } from "@material-ui/icons";
 import IconMenu from "@material-ui/icons/Menu";
 import SelectTypeDialog from "./components/SelectTypeDialog/SelectTypeDialog";
+
 
 class App extends Component {
   constructor(props) {
@@ -32,38 +45,116 @@ class App extends Component {
     this.calendar = null;
     this.state = {
       isDrawingOpen: true,
-      isTypeDialogOpen: true,
-      levels: ["None", "Beginner", "Advanced", "For everyone", "Intermediate"],
+      isTypeDialogOpen: false,
+      levels: ["None", "For everyone", "Beginner", "Intermediate", "Advanced"],
       filters: {
         level: "None"
-      }
+      },
+      content: [],
+      selectedEvent: null,
+      selectedEventDetails: null
     };
   }
 
-  componentDidMount() {
-    const options = {
-      events: (start, end, timezone, callback) =>
-        this.fetchData(start, end, timezone, callback),
+  async componentDidMount() {
+    const self = this;
+    this.options = {
+      events: (start, end, _, callback) => this.fetchData(start, end, _, callback),
       defaultView: "agendaWeek",
       allDaySlot: false,
       editable: true,
-      header: false,
+      header: undefined,
       columnFormat: "dddd",
       firstDay: 1,
-      slotDuration: "00:05:00",
-      height: "parent"
+      slotDuration: "00:10:00",
+      height: "parent",
+      droppable: true,
+      eventReceive: (event) => this.eventReceive(event),
+      eventClick: function (event) {
+        self.eventClick(this, event);
+      },
+      eventResize: function () {
+        self.setState({ selectedEvent: null });
+      }
     };
-    this.calendar = new Calendar(this.refCalendar.current, options);
+    this.options.eventClick.bind(this);
+    console.log(this);
+    this.calendar = new Calendar(this.refCalendar.current, this.options);
     this.calendar.render();
+    console.log(this.refCalendar.current);
+    document.querySelector(".fc-scroller").addEventListener("scroll", () => {
+      if (this.state.selectedEvent) {
+        this.setState({ selectedEvent: null });
+      }
+    });
+    const content = await axios.get("/v1/pi/content?gym_id=44");
+    console.log(content);
+    this.setState({ content: content.data });
   }
 
-  fetchData = async (start, end, timezone, callback) => {
-    const startdate = start.format("YYYY-MM-DD");
-    const enddate = end.format("YYYY-MM-DD");
-    console.log("startdate", startdate, "enddate", enddate);
-    const response = await axios.post(
-      `https://api-wexer.herokuapp.com/v1/calendars/7364?start=${startdate}&end=${enddate}`
-    );
+  componentDidUpdate(_, prevState) {
+    if (prevState.content.length == 0 && this.state.content.length > 0) {
+      console.log("Content was added, making them draggable");
+      const draggableEvents = document.querySelector(".test");
+      dragula([draggableEvents], { copy: true, });
+    }
+  }
+
+  eventClick(element, event) {
+    console.log("woot", element);
+    this.setState({ selectedEvent: element, selectedEventDetails: event });
+  }
+
+  eventReceive = async (event) => {
+    console.log(event);
+    const payload = {
+      start: this.formatDate(event.start),
+      end: this.formatDate(event.end)
+    }
+    await axios.post("/v2/event", payload);
+  }
+
+  fetchData = async (start, end, _, callback) => {
+    console.log(`fetching data for time period ${start.format()} - ${end.format()}`);
+    const response = await axios.get("/v2/event");
+
+    const hello_empty = [];
+    response.data.result.forEach(event => {
+      if (event.day_of_week) {
+        /* Clone view start */
+        for (let i = start; i.isSameOrBefore(end); i.add('days', 8)) {
+          const eventStart = i.clone();
+
+          const eventStartMoment = moment(event.start);
+
+          eventStart.weekday(event.day_of_week - 1);
+          const duration = moment(event.end).diff(moment(event.start));
+
+          eventStart.hours(eventStartMoment.hours());
+          eventStart.minutes(eventStartMoment.minutes());
+          eventStart.seconds(eventStartMoment.seconds());
+
+          const eventEnd = eventStart.clone();
+          eventEnd.add(duration);
+
+          const newEvent = {
+            start: eventStart,
+            end: eventEnd,
+            title: "I'm a recurring event",
+            day_of_week: event.day_of_week
+          }
+          if (event.exceptions.length == 0 || event.exceptions.filter(exp => exp.start === this.formatDate(eventStart)).length == 0) {
+            hello_empty.push(newEvent);
+          }
+        }
+      }
+      else {
+        hello_empty.push(event);
+      }
+    });
+    console.log("hello empty", hello_empty);
+    callback(hello_empty);
+    /*
     const mappedData = response.data.result.map(event => {
       let color = "";
       switch (event.sf_kategori) {
@@ -78,13 +169,16 @@ class App extends Component {
       }
       return {
         ...event,
-        start: event.startdate,
-        end: event.enddate,
         color
       };
     });
-    callback(mappedData);
+    console.log("mappedData", mappedData);
+    callback(mappedData);*/
   };
+
+  formatDate = (moment) => {
+    return moment.format('YYYY-MM-DD HH:mm:ss');
+  }
 
   selectType = type => {
     this.setState({ type, isTypeDialogOpen: false });
@@ -96,8 +190,24 @@ class App extends Component {
     this.setState({ filters });
   };
 
+  clickAway = () => {
+    console.log("clicked away");
+    this.setState({ selectedEvent: null });
+  }
+
+  toggleRecurring = (event) => {
+    const { selectedEventDetails } = this.state;
+    if (selectedEventDetails.day_of_week == null) {
+      selectedEventDetails.day_of_week = 1;
+    }
+    else {
+      selectedEventDetails.day_of_week = null;
+    }
+    this.setState({ selectedEventDetails });
+  }
+
   render() {
-    const { isDrawingOpen, isTypeDialogOpen, levels, filters } = this.state;
+    const { isDrawingOpen, isTypeDialogOpen, levels, filters, selectedEvent, selectedEventDetails } = this.state;
 
     return (
       <div className="App">
@@ -108,20 +218,23 @@ class App extends Component {
           <AppBar
             position="static"
             style={{ boxShadow: "none", marginBottom: 5 }}
+            color="inherit"
           >
             <Toolbar>
-              <IconButton
-                color="inherit"
-                onClick={() =>
-                  this.setState({ isDrawingOpen: !this.state.isDrawingOpen })
-                }
-              >
-                <IconMenu />
-              </IconButton>
+              {!isDrawingOpen &&
+                <IconButton
+                  color="inherit"
+                  onClick={() =>
+                    this.setState({ isDrawingOpen: !this.state.isDrawingOpen })
+                  }
+                >
+
+                  <IconMenu />
+                </IconButton>
+              }
               <div style={{ marginLeft: "auto" }}>
                 <Tooltip
                   title="Toggle simple/advanced view"
-                  style={{ fontSize: 16 }}
                 >
                   <IconButton
                     color="inherit"
@@ -143,7 +256,7 @@ class App extends Component {
           </AppBar>
           <div id="calendar" ref={this.refCalendar} />
         </div>
-        <Drawer variant="persistent" anchor="left" open={isDrawingOpen}>
+        <Drawer variant="persistent" anchor="left" open={isDrawingOpen} PaperProps={{ style: { maxWidth: 280 } }}>
           <div className="content">
             <IconButton
               onClick={() =>
@@ -180,6 +293,16 @@ class App extends Component {
               </ListItem>
               <ListItem>Lorem ipsum dolor sit amet.</ListItem>
               <ListItem>Lorem ipsum dolor sit amet.</ListItem>
+              <div className="test">
+                {this.state.content.map((contentEntry, index) => index < 10 ?
+                  <ListItem className="event" button data-event={`{ "title" : "${contentEntry.name}", "duration" : "01:00:00"}`}>
+                    <Avatar src={`https://nfoo-server.com/ConnectedFitnessLabs/${contentEntry.file_name.substr(0, contentEntry.file_name.length - 4)}Square.jpg`} />
+                    <ListItemText>
+                      {contentEntry.name}
+                    </ListItemText>
+                  </ListItem> : null)
+                }
+              </div>
             </List>
           </div>
           <SelectTypeDialog
@@ -187,7 +310,33 @@ class App extends Component {
             selectType={this.selectType}
           />
         </Drawer>
-      </div>
+        <Popper
+          anchorEl={selectedEvent}
+          open={Boolean(selectedEvent)}
+          placement="right"
+          style={{ zIndex: 2, marginLeft: 4 }}
+          transition
+        >
+          {({ TransitionProps }) =>
+            <Grow {...TransitionProps}>
+              <Card style={{ width: 250 }}>
+                <CardContent>
+                  <p>Lorem ipsum dolor sit, amet consectetur adipisicing elit. Esse, hic.</p>
+                  <FormControlLabel control={
+                    <Switch checked={selectedEventDetails.day_of_week ? true : false} onChange={this.toggleRecurring} />}
+                    label="Recurring event"
+                  />
+                </CardContent>
+                <CardActions>
+                  <IconButton>
+                    <Delete />
+                  </IconButton>
+                </CardActions>
+              </Card>
+            </Grow>
+          }
+        </Popper>
+      </div >
     );
   }
 }
