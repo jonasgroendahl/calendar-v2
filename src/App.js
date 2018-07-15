@@ -26,9 +26,6 @@ import {
   Popper,
   CardContent,
   CardActions,
-  Backdrop,
-  ClickAwayListener,
-  Zoom,
   Grow,
   Switch,
   FormControlLabel
@@ -52,7 +49,8 @@ class App extends Component {
       },
       content: [],
       selectedEvent: null,
-      selectedEventDetails: null
+      selectedEventDetails: null,
+      type: 'advanced'
     };
   }
 
@@ -63,8 +61,12 @@ class App extends Component {
       defaultView: "agendaWeek",
       allDaySlot: false,
       editable: true,
-      header: undefined,
-      columnFormat: "dddd",
+      header:
+      {
+        left: 'title',
+        right: 'today prev,next'
+      },
+      columnFormat: "ddd",
       firstDay: 1,
       slotDuration: "00:10:00",
       height: "parent",
@@ -78,15 +80,9 @@ class App extends Component {
       }
     };
     this.options.eventClick.bind(this);
-    console.log(this);
     this.calendar = new Calendar(this.refCalendar.current, this.options);
     this.calendar.render();
-    console.log(this.refCalendar.current);
-    document.querySelector(".fc-scroller").addEventListener("scroll", () => {
-      if (this.state.selectedEvent) {
-        this.setState({ selectedEvent: null });
-      }
-    });
+    this.addScrollListener();
     const content = await axios.get("/v1/pi/content?gym_id=44");
     console.log(content);
     this.setState({ content: content.data });
@@ -101,8 +97,16 @@ class App extends Component {
   }
 
   eventClick(element, event) {
-    console.log("woot", element);
     this.setState({ selectedEvent: element, selectedEventDetails: event });
+  }
+
+  addScrollListener = () => {
+    document.querySelector(".fc-scroller").addEventListener("scroll", () => {
+      console.log("scrolling");
+      if (this.state.selectedEvent) {
+        this.setState({ selectedEvent: null });
+      }
+    });
   }
 
   eventReceive = async (event) => {
@@ -181,6 +185,18 @@ class App extends Component {
   }
 
   selectType = type => {
+    if (type == 'simple') {
+      this.calendar.option("header", false);
+      this.calendar.option("columnFormat", "ddd");
+    }
+    else {
+      this.calendar.option("header", {
+        left: 'title',
+        right: 'today prev,next'
+      });
+      this.calendar.option("columnFormat", "ddd M/D");
+    }
+    this.addScrollListener();
     this.setState({ type, isTypeDialogOpen: false });
   };
 
@@ -207,7 +223,7 @@ class App extends Component {
   }
 
   render() {
-    const { isDrawingOpen, isTypeDialogOpen, levels, filters, selectedEvent, selectedEventDetails } = this.state;
+    const { isDrawingOpen, isTypeDialogOpen, levels, filters, selectedEvent, selectedEventDetails, type } = this.state;
 
     return (
       <div className="App">
@@ -322,10 +338,12 @@ class App extends Component {
               <Card style={{ width: 250 }}>
                 <CardContent>
                   <p>Lorem ipsum dolor sit, amet consectetur adipisicing elit. Esse, hic.</p>
-                  <FormControlLabel control={
-                    <Switch checked={selectedEventDetails.day_of_week ? true : false} onChange={this.toggleRecurring} />}
-                    label="Recurring event"
-                  />
+                  {type == 'advanced' &&
+                    <FormControlLabel control={
+                      <Switch checked={selectedEventDetails.day_of_week ? true : false} onChange={this.toggleRecurring} />}
+                      label="Recurring event"
+                    />
+                  }
                 </CardContent>
                 <CardActions>
                   <IconButton>
