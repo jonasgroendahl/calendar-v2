@@ -402,6 +402,13 @@ class App extends Component {
             <ListItemText>{contentEntry.sf_engelsktitel}</ListItemText>
           </ListItem>
         );
+      } else if (
+        contentEntry.sf_engelsktitel
+          .toLowerCase()
+          .includes(search.toLowerCase()) &&
+        contentEntry.indslagtypeid == eventType
+      ) {
+        localMatches++;
       }
     });
     // if no matches
