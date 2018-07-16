@@ -1,12 +1,10 @@
-import React, { PureComponent, Fragment } from "react";
+import React, { PureComponent } from "react";
 import {
   Dialog,
-  DialogContent,
   Card,
   CardMedia,
   CardContent,
   withStyles,
-  Modal,
   CardActions,
   Button
 } from "@material-ui/core";

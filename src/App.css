@@ -6,6 +6,11 @@
   text-align: center;
 }
 
+.test {
+  height: calc(100vh - 410px);
+  overflow: hidden;
+}
+
 .App-logo {
   animation: App-logo-spin infinite 20s linear;
   height: 80px;
@@ -26,9 +31,14 @@
 }
 
 .calendar-container {
-  height: calc(90vh - 124px - 30px);
+  height: calc(100vh - 120px);
   margin: 0 auto;
   padding: 10px;
+}
+
+.calendar-picker-div {
+  display: flex;
+  align-items: center;
 }
 
 @keyframes App-logo-spin {

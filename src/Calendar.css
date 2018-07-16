@@ -5,8 +5,8 @@
 
 #calendar .fc-event {
   padding: 3px;
-  background: var(--eventColor);
-  border-color: var(--eventColor);
+  background: black;
+  border-color: black;
 }
 
 #calendar .fc-event .fc-bg {

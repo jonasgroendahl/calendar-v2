@@ -4,7 +4,7 @@ import "./App.css";
 import "./Calendar.css";
 import "fullcalendar/dist/fullcalendar.min.css";
 import { Calendar, moment } from "fullcalendar";
-import dragula from 'fullcalendar/dist/dragula.min.js';
+import dragula from "fullcalendar/dist/dragula.min.js";
 import {
   Drawer,
   List,
@@ -23,67 +23,90 @@ import {
   ListItemText,
   Avatar,
   Card,
-  Popper,
   CardContent,
   CardActions,
-  Grow,
   Switch,
-  FormControlLabel
+  FormControlLabel,
+  Popover,
+  BottomNavigation,
+  BottomNavigationAction
 } from "@material-ui/core";
-import { ChevronRight, Layers, Search, Cloud, Delete } from "@material-ui/icons";
+import {
+  ChevronRight,
+  Layers,
+  Search,
+  Cloud,
+  Delete,
+  ZoomIn,
+  ZoomOut,
+  Event,
+  Videocam,
+  Person,
+  Favorite,
+  Star
+} from "@material-ui/icons";
 import IconMenu from "@material-ui/icons/Menu";
 import SelectTypeDialog from "./components/SelectTypeDialog/SelectTypeDialog";
-
+import CalendarDialog from "./components/CalendarDialog/CalendarDialog";
 
 class App extends Component {
   constructor(props) {
     super(props);
     this.refCalendar = React.createRef();
     this.calendar = null;
+    this.zoom = 2;
     this.state = {
       isDrawingOpen: true,
       isTypeDialogOpen: false,
+      isCalendarDialogOpen: false,
       levels: ["None", "For everyone", "Beginner", "Intermediate", "Advanced"],
       filters: {
         level: "None"
       },
       content: [],
       selectedEvent: null,
-      selectedEventDetails: null,
-      type: 'advanced'
+      selectedEventDetails: { duration: "", level: "", category: "" },
+      selectedCalendar: 41,
+      calendars: [
+        { name: "Les Mills Schedule", id: 41 },
+        { name: "Zumba schedule", id: 42 }
+      ],
+      type: "simple",
+      view: "agendaWeek",
+      showEventType: 0
     };
   }
 
   async componentDidMount() {
     const self = this;
     this.options = {
-      events: (start, end, _, callback) => this.fetchData(start, end, _, callback),
+      events: (start, end, _, callback) =>
+        this.fetchData(start, end, _, callback),
       defaultView: "agendaWeek",
       allDaySlot: false,
       editable: true,
-      header:
-      {
-        left: 'title',
-        right: 'today prev,next'
-      },
+      header: false,
       columnFormat: "ddd",
       firstDay: 1,
+      minTime: "03:00:00",
+      maxTime: "21:00:00",
       slotDuration: "00:10:00",
       height: "parent",
       droppable: true,
-      eventReceive: (event) => this.eventReceive(event),
-      eventClick: function (event) {
+      eventReceive: event => this.eventReceive(event),
+      eventClick: function(event) {
         self.eventClick(this, event);
       },
-      eventResize: function () {
+      eventResize: function() {
         self.setState({ selectedEvent: null });
-      }
+      },
+      eventRender: (event, element) => this.eventRender(event, element)
     };
     this.options.eventClick.bind(this);
     this.calendar = new Calendar(this.refCalendar.current, this.options);
     this.calendar.render();
     this.addScrollListener();
-    const content = await axios.get("/v1/pi/content?gym_id=44");
+    const content = await axios.get("/v2/content");
     console.log(content);
     this.setState({ content: content.data });
   }
@@ -92,11 +115,12 @@ class App extends Component {
     if (prevState.content.length == 0 && this.state.content.length > 0) {
       console.log("Content was added, making them draggable");
       const draggableEvents = document.querySelector(".test");
-      dragula([draggableEvents], { copy: true, });
+      dragula([draggableEvents], { copy: true });
     }
   }
 
   eventClick(element, event) {
+    console.log(element, event);
     this.setState({ selectedEvent: element, selectedEventDetails: event });
   }
 
@@ -107,31 +131,52 @@ class App extends Component {
         this.setState({ selectedEvent: null });
       }
     });
-  }
+  };
 
-  eventReceive = async (event) => {
+  eventRender = (event, element) => {
+    element.style.backgroundImage = `url(${event.img})`;
+    element.style.backgroundSize = `cover`;
+    element.style.backgroundRepeat = `no-repeat`;
+  };
+
+  eventReceive = async event => {
     console.log(event);
+    let day_of_week = 0;
+    event.img = `https://nfoo-server.com/wexerpreview/${
+      event.sf_masterid
+    }_${event.navn.substr(0, event.navn.length - 4)}Square.jpg`;
+    day_of_week = event.start.isoWeekday();
+
     const payload = {
       start: this.formatDate(event.start),
-      end: this.formatDate(event.end)
-    }
-    await axios.post("/v2/event", payload);
-  }
+      end: this.formatDate(event.end),
+      video_id: event.video_id
+    };
+    const id = await axios.post(
+      `/v2/event?day_of_week=${day_of_week}`,
+      payload
+    );
+    event.id = id.data;
+    event.duration = this.calendar.updateEvent(event);
+  };
 
   fetchData = async (start, end, _, callback) => {
-    console.log(`fetching data for time period ${start.format()} - ${end.format()}`);
+    console.log(
+      `fetching data for time period ${start.format()} - ${end.format()}`
+    );
     const response = await axios.get("/v2/event");
 
     const hello_empty = [];
     response.data.result.forEach(event => {
+      console.log("event", event);
       if (event.day_of_week) {
         /* Clone view start */
-        for (let i = start; i.isSameOrBefore(end); i.add('days', 8)) {
+        for (let i = start.clone(); i.isSameOrBefore(end); i.add("days", 8)) {
           const eventStart = i.clone();
 
           const eventStartMoment = moment(event.start);
 
-          eventStart.weekday(event.day_of_week - 1);
+          eventStart.isoWeekday(event.day_of_week);
           const duration = moment(event.end).diff(moment(event.start));
 
           eventStart.hours(eventStartMoment.hours());
@@ -142,17 +187,29 @@ class App extends Component {
           eventEnd.add(duration);
 
           const newEvent = {
+            id: event.id,
             start: eventStart,
             end: eventEnd,
-            title: "I'm a recurring event",
-            day_of_week: event.day_of_week
-          }
-          if (event.exceptions.length == 0 || event.exceptions.filter(exp => exp.start === this.formatDate(eventStart)).length == 0) {
+            title: event.title,
+            day_of_week: event.day_of_week,
+            img: `https://nfoo-server.com/wexerpreview/${
+              event.sf_masterid
+            }_${event.navn.substr(0, event.navn.length - 4)}Square.jpg`,
+            duration: event.sf_varighed,
+            level: event.sf_level,
+            category: event.sf_kategori
+          };
+
+          if (
+            event.exceptions.length == 0 ||
+            event.exceptions.filter(
+              exp => exp.start === this.formatDate(eventStart)
+            ).length == 0
+          ) {
             hello_empty.push(newEvent);
           }
         }
-      }
-      else {
+      } else {
         hello_empty.push(event);
       }
     });
@@ -180,19 +237,19 @@ class App extends Component {
     callback(mappedData);*/
   };
 
-  formatDate = (moment) => {
-    return moment.format('YYYY-MM-DD HH:mm:ss');
-  }
+  formatDate = moment => {
+    return moment.format("YYYY-MM-DD HH:mm:ss");
+  };
 
   selectType = type => {
-    if (type == 'simple') {
+    type = "simple";
+    if (type == "simple") {
       this.calendar.option("header", false);
       this.calendar.option("columnFormat", "ddd");
-    }
-    else {
+    } else {
       this.calendar.option("header", {
-        left: 'title',
-        right: 'today prev,next'
+        left: "title",
+        right: "today prev,next"
       });
       this.calendar.option("columnFormat", "ddd M/D");
     }
@@ -209,21 +266,92 @@ class App extends Component {
   clickAway = () => {
     console.log("clicked away");
     this.setState({ selectedEvent: null });
-  }
+  };
 
-  toggleRecurring = (event) => {
+  toggleRecurring = event => {
     const { selectedEventDetails } = this.state;
     if (selectedEventDetails.day_of_week == null) {
       selectedEventDetails.day_of_week = 1;
-    }
-    else {
+    } else {
       selectedEventDetails.day_of_week = null;
     }
     this.setState({ selectedEventDetails });
-  }
+  };
+
+  onEventDelete = () => {
+    axios.delete(`/v2/event/${this.state.selectedEventDetails.id}`);
+    this.calendar.removeEvents(this.state.selectedEventDetails._id);
+    this.setState({ selectedEvent: null });
+  };
+
+  viewChangeHandler = event => {
+    this.setState({ view: event.target.value });
+    this.calendar.changeView(event.target.value);
+  };
+
+  zoomHandler = direction => {
+    if (direction == "in" && this.zoom > 0) {
+      this.zoom--;
+    } else if (direction == "out" && this.zoom < 5) {
+      this.zoom++;
+    }
+    switch (this.zoom) {
+      case 0:
+        this.calendar.option("slotDuration", "00:01:00");
+        break;
+      case 1:
+        this.calendar.option("slotDuration", "00:05:00");
+        break;
+      case 2:
+        this.calendar.option("slotDuration", "00:10:00");
+        break;
+      case 3:
+        this.calendar.option("slotDuration", "00:30:00");
+        break;
+      default:
+        this.calendar.option("slotDuration", "01:00:00");
+        break;
+    }
+  };
+
+  changeCalendarHandler = event => {
+    if (event.target.value == 0) {
+      this.toggleCalendarDialog();
+    }
+    this.setState({ selectedCalendar: event.target.value });
+  };
+
+  toggleCalendarDialog = () => {
+    const { isCalendarDialogOpen, calendars } = this.state;
+    if (isCalendarDialogOpen && calendars.length > 0) {
+      this.setState({ selectedCalendar: calendars[0].id });
+    }
+    this.setState({ isCalendarDialogOpen: !isCalendarDialogOpen });
+  };
+
+  addCalendar = name => {
+    const { calendars } = this.state;
+    calendars.push({
+      id: Math.floor(Math.random() * Math.floor(100)),
+      name
+    });
+    this.toggleCalendarDialog();
+    this.setState({ calendars });
+  };
 
   render() {
-    const { isDrawingOpen, isTypeDialogOpen, levels, filters, selectedEvent, selectedEventDetails, type } = this.state;
+    const {
+      isDrawingOpen,
+      isTypeDialogOpen,
+      levels,
+      filters,
+      selectedEvent,
+      selectedEventDetails,
+      type,
+      view,
+      selectedCalendar,
+      isCalendarDialogOpen
+    } = this.state;
 
     return (
       <div className="App">
@@ -237,21 +365,52 @@ class App extends Component {
             color="inherit"
           >
             <Toolbar>
-              {!isDrawingOpen &&
+              {!isDrawingOpen && (
                 <IconButton
                   color="inherit"
                   onClick={() =>
                     this.setState({ isDrawingOpen: !this.state.isDrawingOpen })
                   }
+                  style={{ marginRight: 10 }}
                 >
-
                   <IconMenu />
                 </IconButton>
-              }
-              <div style={{ marginLeft: "auto" }}>
-                <Tooltip
-                  title="Toggle simple/advanced view"
+              )}
+              <div className="calendar-picker-div">
+                <Tooltip title="Les Mills Player">
+                  <Event style={{ marginRight: 5 }} />
+                </Tooltip>
+                <Select
+                  disableUnderline
+                  value={selectedCalendar}
+                  onChange={this.changeCalendarHandler}
                 >
+                  {this.state.calendars.map(calendar => (
+                    <MenuItem value={calendar.id} key={`calend${calendar.id}`}>
+                      {calendar.name}
+                    </MenuItem>
+                  ))}
+                  <MenuItem value={0}>-- Add New Calendar --</MenuItem>
+                </Select>
+              </div>
+              <div style={{ marginLeft: "auto" }}>
+                <IconButton onClick={() => this.zoomHandler("in")}>
+                  <ZoomIn />
+                </IconButton>
+                <IconButton onClick={() => this.zoomHandler("out")}>
+                  <ZoomOut />
+                </IconButton>
+                <Select
+                  value={view}
+                  onChange={this.viewChangeHandler}
+                  disableUnderline
+                  style={{ marginLeft: 5 }}
+                >
+                  <MenuItem value="agendaWeek">Week</MenuItem>
+                  <MenuItem value="month">Month</MenuItem>
+                  <MenuItem value="agendaDay">Day</MenuItem>
+                </Select>
+                <Tooltip title="Toggle simple/advanced view">
                   <IconButton
                     color="inherit"
                     onClick={() => this.setState({ isTypeDialogOpen: true })}
@@ -262,7 +421,7 @@ class App extends Component {
                 <Tooltip title="Publish changes to the Wexer player">
                   <IconButton
                     color="secondary"
-                    onClick={() => this.setState({ isPublishDialogOpen: true })}
+                    onClick={() => alert("Published changes!")}
                   >
                     <Cloud />
                   </IconButton>
@@ -272,7 +431,12 @@ class App extends Component {
           </AppBar>
           <div id="calendar" ref={this.refCalendar} />
         </div>
-        <Drawer variant="persistent" anchor="left" open={isDrawingOpen} PaperProps={{ style: { maxWidth: 280 } }}>
+        <Drawer
+          variant="persistent"
+          anchor="left"
+          open={isDrawingOpen}
+          PaperProps={{ style: { maxWidth: 294 } }}
+        >
           <div className="content">
             <IconButton
               onClick={() =>
@@ -307,54 +471,123 @@ class App extends Component {
                   </Select>
                 </FormControl>
               </ListItem>
-              <ListItem>Lorem ipsum dolor sit amet.</ListItem>
-              <ListItem>Lorem ipsum dolor sit amet.</ListItem>
+              <ListItem>
+                <FormControl fullWidth>
+                  <InputLabel>Filter by Level</InputLabel>
+                  <Select
+                    onChange={this.onLevelChange}
+                    value={filters.level}
+                    label="Filter by level"
+                  >
+                    {levels.map(level => (
+                      <MenuItem value={level}>{level}</MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </ListItem>
+              <ListItem>
+                <FormControl fullWidth>
+                  <InputLabel>Filter by Level</InputLabel>
+                  <Select
+                    onChange={this.onLevelChange}
+                    value={filters.level}
+                    label="Filter by level"
+                  >
+                    {levels.map(level => (
+                      <MenuItem value={level}>{level}</MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </ListItem>
               <div className="test">
-                {this.state.content.map((contentEntry, index) => index < 10 ?
-                  <ListItem className="event" button data-event={`{ "title" : "${contentEntry.name}", "duration" : "01:00:00"}`}>
-                    <Avatar src={`https://nfoo-server.com/ConnectedFitnessLabs/${contentEntry.file_name.substr(0, contentEntry.file_name.length - 4)}Square.jpg`} />
-                    <ListItemText>
-                      {contentEntry.name}
-                    </ListItemText>
-                  </ListItem> : null)
-                }
+                {this.state.content.map(
+                  (contentEntry, index) =>
+                    index < 10 ? (
+                      <ListItem
+                        className="event"
+                        button
+                        data-event={`{ "title" : "${
+                          contentEntry.sf_engelsktitel
+                        }", "duration" : "${
+                          contentEntry.sf_varighed
+                        }", "video_id" : ${
+                          contentEntry.indslagid
+                        }, "sf_masterid" : ${
+                          contentEntry.sf_masterid
+                        }, "navn" : "${contentEntry.navn}", 
+                        "level": "${contentEntry.sf_level}"}`}
+                      >
+                        <Avatar
+                          src={`https://nfoo-server.com/wexerpreview/${
+                            contentEntry.sf_masterid
+                          }_${contentEntry.navn.substr(
+                            0,
+                            contentEntry.navn.length - 4
+                          )}Square.jpg`}
+                        />
+                        <ListItemText>
+                          {contentEntry.sf_engelsktitel}
+                        </ListItemText>
+                      </ListItem>
+                    ) : null
+                )}
               </div>
+              <BottomNavigation
+                value={this.state.showEventType}
+                onChange={(event, value) =>
+                  this.setState({ showEventType: value })
+                }
+                showLabels
+              >
+                <BottomNavigationAction label="Classes" icon={<Videocam />} />
+                <BottomNavigationAction label="Own classes" icon={<Person />} />
+                <BottomNavigationAction label="Favorites" icon={<Favorite />} />
+              </BottomNavigation>
             </List>
           </div>
           <SelectTypeDialog
             show={isTypeDialogOpen}
             selectType={this.selectType}
           />
+          <CalendarDialog
+            show={isCalendarDialogOpen}
+            calendars={this.state.calendars}
+            toggleCalendarDialog={this.toggleCalendarDialog}
+            addCalendar={this.addCalendar}
+          />
         </Drawer>
-        <Popper
-          anchorEl={selectedEvent}
+        <Popover
+          anchorEl={selectedEvent ? selectedEvent : null}
           open={Boolean(selectedEvent)}
           placement="right"
           style={{ zIndex: 2, marginLeft: 4 }}
-          transition
+          onClose={() => this.setState({ selectedEvent: false })}
         >
-          {({ TransitionProps }) =>
-            <Grow {...TransitionProps}>
-              <Card style={{ width: 250 }}>
-                <CardContent>
-                  <p>Lorem ipsum dolor sit, amet consectetur adipisicing elit. Esse, hic.</p>
-                  {type == 'advanced' &&
-                    <FormControlLabel control={
-                      <Switch checked={selectedEventDetails.day_of_week ? true : false} onChange={this.toggleRecurring} />}
-                      label="Recurring event"
+          <Card style={{ width: 300 }}>
+            <CardContent>
+              <p>{selectedEventDetails.title}</p>
+              <p>{selectedEventDetails.duration}</p>
+              <p>{selectedEventDetails.level}</p>
+              {type == "advanced" && (
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={selectedEventDetails.day_of_week ? true : false}
+                      onChange={this.toggleRecurring}
                     />
                   }
-                </CardContent>
-                <CardActions>
-                  <IconButton>
-                    <Delete />
-                  </IconButton>
-                </CardActions>
-              </Card>
-            </Grow>
-          }
-        </Popper>
-      </div >
+                  label="Recurring event"
+                />
+              )}
+            </CardContent>
+            <CardActions>
+              <IconButton onClick={this.onEventDelete}>
+                <Delete />
+              </IconButton>
+            </CardActions>
+          </Card>
+        </Popover>
+      </div>
     );
   }
 }
