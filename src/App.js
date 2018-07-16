@@ -93,6 +93,9 @@ class App extends Component {
       slotDuration: "00:10:00",
       height: "parent",
       droppable: true,
+      viewChange: function() {
+        this.calendar.rerenderEvents();
+      },
       eventReceive: event => this.eventReceive(event),
       eventClick: function(event) {
         self.eventClick(this, event);
@@ -125,12 +128,7 @@ class App extends Component {
   }
 
   addScrollListener = () => {
-    document.querySelector(".fc-scroller").addEventListener("scroll", () => {
-      console.log("scrolling");
-      if (this.state.selectedEvent) {
-        this.setState({ selectedEvent: null });
-      }
-    });
+    //
   };
 
   eventRender = (event, element) => {
@@ -213,28 +211,14 @@ class App extends Component {
         hello_empty.push(event);
       }
     });
-    console.log("hello empty", hello_empty);
-    callback(hello_empty);
     /*
-    const mappedData = response.data.result.map(event => {
-      let color = "";
-      switch (event.sf_kategori) {
-        case "Cycling (Cycling)":
-          color = "var(--eventCycling)";
-          break;
-        case "D´stress and relax (Mind-body)":
-          color = "var(--eventColor)";
-          break;
-        default:
-          color = "var(--eventCycling)";
-      }
-      return {
-        ...event,
-        color
-      };
-    });
-    console.log("mappedData", mappedData);
-    callback(mappedData);*/
+    const print = hello_empty.map(h => ({
+      start: h.start.format(),
+      day_of_week: h.day_of_week
+    }));
+    console.table(print);
+    */
+    callback(hello_empty);
   };
 
   formatDate = moment => {
@@ -407,7 +391,7 @@ class App extends Component {
                   style={{ marginLeft: 5 }}
                 >
                   <MenuItem value="agendaWeek">Week</MenuItem>
-                  <MenuItem value="month">Month</MenuItem>
+                  <MenuItem value="listWeek">List Week</MenuItem>
                   <MenuItem value="agendaDay">Day</MenuItem>
                 </Select>
                 <Tooltip title="Toggle simple/advanced view">
