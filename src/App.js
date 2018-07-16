@@ -42,8 +42,7 @@ import {
   Event,
   Videocam,
   Person,
-  Favorite,
-  Star
+  Favorite
 } from "@material-ui/icons";
 import IconMenu from "@material-ui/icons/Menu";
 import SelectTypeDialog from "./components/SelectTypeDialog/SelectTypeDialog";
@@ -73,7 +72,9 @@ class App extends Component {
       ],
       type: "simple",
       view: "agendaWeek",
-      showEventType: 0
+      showEventType: 0,
+      search: "",
+      matches: 10
     };
   }
 
@@ -119,6 +120,15 @@ class App extends Component {
       console.log("Content was added, making them draggable");
       const draggableEvents = document.querySelector(".test");
       dragula([draggableEvents], { copy: true });
+      draggableEvents.addEventListener("scroll", event => {
+        if (
+          event.target.clientHeight + event.target.scrollTop >=
+          event.target.scrollHeight
+        ) {
+          const { matches } = this.state;
+          this.setState({ matches: matches + 10 });
+        }
+      });
     }
   }
 
@@ -323,6 +333,10 @@ class App extends Component {
     this.setState({ calendars });
   };
 
+  searchHandler = event => {
+    this.setState({ search: event.target.value, matches: 10 });
+  };
+
   render() {
     const {
       isDrawingOpen,
@@ -334,8 +348,46 @@ class App extends Component {
       type,
       view,
       selectedCalendar,
-      isCalendarDialogOpen
+      isCalendarDialogOpen,
+      search,
+      matches
     } = this.state;
+
+    let localMatches = 0;
+    const classes = this.state.content.map(contentEntry => {
+      if (
+        contentEntry.sf_engelsktitel
+          .toLowerCase()
+          .includes(search.toLowerCase()) &&
+        localMatches < matches
+      ) {
+        localMatches++;
+        return (
+          <ListItem
+            className="event"
+            button
+            data-event={`{ "title" : "${
+              contentEntry.sf_engelsktitel
+            }", "duration" : "${contentEntry.sf_varighed}", "video_id" : ${
+              contentEntry.indslagid
+            }, "sf_masterid" : ${contentEntry.sf_masterid}, "navn" : "${
+              contentEntry.navn
+            }", 
+            "level": "${contentEntry.sf_level}"}`}
+          >
+            <Avatar
+              src={`https://nfoo-server.com/wexerpreview/${
+                contentEntry.sf_masterid
+              }_${contentEntry.navn.substr(
+                0,
+                contentEntry.navn.length - 4
+              )}Square.jpg`}
+            />
+            <ListItemText>{contentEntry.sf_engelsktitel}</ListItemText>
+          </ListItem>
+        );
+      }
+    });
 
     return (
       <div className="App">
@@ -437,7 +489,11 @@ class App extends Component {
                     <Search />
                   </Grid>
                   <Grid item>
-                    <TextField label="Search" />
+                    <TextField
+                      label="Search"
+                      value={search}
+                      onChange={this.searchHandler}
+                    />
                   </Grid>
                 </Grid>
               </ListItem>
@@ -483,39 +539,7 @@ class App extends Component {
                   </Select>
                 </FormControl>
               </ListItem>
-              <div className="test">
-                {this.state.content.map(
-                  (contentEntry, index) =>
-                    index < 10 ? (
-                      <ListItem
-                        className="event"
-                        button
-                        data-event={`{ "title" : "${
-                          contentEntry.sf_engelsktitel
-                        }", "duration" : "${
-                          contentEntry.sf_varighed
-                        }", "video_id" : ${
-                          contentEntry.indslagid
-                        }, "sf_masterid" : ${
-                          contentEntry.sf_masterid
-                        }, "navn" : "${contentEntry.navn}", 
-                        "level": "${contentEntry.sf_level}"}`}
-                      >
-                        <Avatar
-                          src={`https://nfoo-server.com/wexerpreview/${
-                            contentEntry.sf_masterid
-                          }_${contentEntry.navn.substr(
-                            0,
-                            contentEntry.navn.length - 4
-                          )}Square.jpg`}
-                        />
-                        <ListItemText>
-                          {contentEntry.sf_engelsktitel}
-                        </ListItemText>
-                      </ListItem>
-                    ) : null
-                )}
-              </div>
+              <div className="test">{classes}</div>
               <BottomNavigation
                 value={this.state.showEventType}
                 onChange={(event, value) =>
