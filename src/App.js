@@ -165,7 +165,13 @@ class App extends Component {
       payload
     );
     event.id = id.data;
-    event.duration = this.calendar.updateEvent(event);
+    console.log(Math.abs(event.start.diff(event.end, "seconds")));
+    const duration = moment(0)
+      .hours(0)
+      .add(Math.abs(event.start.diff(event.end, "seconds")), "seconds")
+      .format("HH:mm:ss");
+    event.duration = duration;
+    this.calendar.updateEvent(event);
   };
 
   fetchData = async (start, end, _, callback) => {
