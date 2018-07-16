@@ -49,3 +49,14 @@
     transform: rotate(360deg);
   }
 }
+
+@media (max-width: 600px) {
+  #leftdrawer > div {
+    position: static;
+    width: auto;
+  }
+  .calendar-container {
+    margin-left: 0 !important;
+    height: auto;
+  }
+}

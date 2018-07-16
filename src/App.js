@@ -29,7 +29,8 @@ import {
   FormControlLabel,
   Popover,
   BottomNavigation,
-  BottomNavigationAction
+  BottomNavigationAction,
+  Badge
 } from "@material-ui/core";
 import {
   ChevronRight,
@@ -74,7 +75,8 @@ class App extends Component {
       view: "agendaWeek",
       showEventType: 0,
       search: "",
-      matches: 10
+      matches: 10,
+      eventType: 3
     };
   }
 
@@ -165,7 +167,6 @@ class App extends Component {
       payload
     );
     event.id = id.data;
-    console.log(Math.abs(event.start.diff(event.end, "seconds")));
     const duration = moment(0)
       .hours(0)
       .add(Math.abs(event.start.diff(event.end, "seconds")), "seconds")
@@ -263,11 +264,6 @@ class App extends Component {
     this.setState({ filters });
   };
 
-  clickAway = () => {
-    console.log("clicked away");
-    this.setState({ selectedEvent: null });
-  };
-
   toggleRecurring = event => {
     const { selectedEventDetails } = this.state;
     if (selectedEventDetails.day_of_week == null) {
@@ -343,6 +339,17 @@ class App extends Component {
     this.setState({ search: event.target.value, matches: 10 });
   };
 
+  onEventTypeChange = (_, value) => {
+    console.log(value);
+    let eventType = 3;
+    if (value == 1) {
+      eventType = 100;
+    } else if (value == 2) {
+      eventType = 5;
+    }
+    this.setState({ showEventType: value, eventType });
+  };
+
   render() {
     const {
       isDrawingOpen,
@@ -356,15 +363,18 @@ class App extends Component {
       selectedCalendar,
       isCalendarDialogOpen,
       search,
-      matches
+      matches,
+      eventType
     } = this.state;
 
     let localMatches = 0;
-    const classes = this.state.content.map(contentEntry => {
+    let classes = [];
+    classes = this.state.content.map(contentEntry => {
       if (
         contentEntry.sf_engelsktitel
           .toLowerCase()
           .includes(search.toLowerCase()) &&
+        contentEntry.indslagtypeid == eventType &&
         localMatches < matches
       ) {
         localMatches++;
@@ -394,6 +404,10 @@ class App extends Component {
         );
       }
     });
+    // if no matches
+    if (classes && classes[0] == undefined) {
+      classes = <ListItem>No classes found!</ListItem>;
+    }
 
     return (
       <div className="App">
@@ -474,12 +488,13 @@ class App extends Component {
           <div id="calendar" ref={this.refCalendar} />
         </div>
         <Drawer
+          id="leftdrawer"
           variant="persistent"
           anchor="left"
           open={isDrawingOpen}
           PaperProps={{ style: { maxWidth: 294 } }}
         >
-          <div className="content">
+          <div>
             <IconButton
               onClick={() =>
                 this.setState({ isDrawingOpen: !this.state.isDrawingOpen })
@@ -488,8 +503,8 @@ class App extends Component {
               <ChevronRight />
             </IconButton>
             <Divider />
-            <List>
-              <ListItem>
+            <List style={{ paddingTop: 0 }}>
+              <ListItem style={{ paddingTop: 0 }}>
                 <Grid container spacing={8} alignItems="flex-end">
                   <Grid item>
                     <Search />
@@ -499,6 +514,7 @@ class App extends Component {
                       label="Search"
                       value={search}
                       onChange={this.searchHandler}
+                      helperText={`Results: ${localMatches}`}
                     />
                   </Grid>
                 </Grid>
@@ -548,9 +564,7 @@ class App extends Component {
               <div className="test">{classes}</div>
               <BottomNavigation
                 value={this.state.showEventType}
-                onChange={(event, value) =>
-                  this.setState({ showEventType: value })
-                }
+                onChange={this.onEventTypeChange}
                 showLabels
               >
                 <BottomNavigationAction label="Classes" icon={<Videocam />} />
