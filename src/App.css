@@ -59,9 +59,13 @@
   #leftdrawer > div {
     position: static;
     width: auto;
+    max-width: none !important;
   }
   .calendar-container {
     margin-left: 0 !important;
     height: auto;
+  }
+  #toolbar {
+    flex-flow: row wrap;
   }
 }

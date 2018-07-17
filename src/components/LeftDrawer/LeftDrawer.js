@@ -17,7 +17,8 @@ import {
   ListItemText,
   Popover,
   Card,
-  CardContent
+  CardContent,
+  ListItemIcon
 } from "@material-ui/core";
 import {
   Search,
@@ -25,7 +26,8 @@ import {
   Videocam,
   Person,
   Favorite,
-  FilterList
+  FilterList,
+  NotificationsActive
 } from "@material-ui/icons";
 import axios from "./../../axios";
 import dragula from "fullcalendar/dist/dragula.min.js";
@@ -63,12 +65,11 @@ export default class LeftDrawer extends Component {
 
   async componentDidMount() {
     const content = await axios.get("/v2/content");
-    console.log("content", content);
     this.setState({ content: content.data });
   }
 
   componentDidUpdate(_, prevState) {
-    if (prevState.content.length == 0 && this.state.content.length > 0) {
+    if (prevState.content.length === 0 && this.state.content.length > 0) {
       console.log("Content was added, making them draggable");
       const draggableEvents = document.querySelector(".test");
       dragula([draggableEvents], { copy: true });
@@ -103,9 +104,9 @@ export default class LeftDrawer extends Component {
   onEventTypeChange = (_, value) => {
     console.log(value);
     let eventType = 3;
-    if (value == 1) {
+    if (value === 1) {
       eventType = 100;
-    } else if (value == 2) {
+    } else if (value === 2) {
       eventType = 5;
     }
     this.setState({ showEventType: value, eventType });
@@ -136,7 +137,10 @@ export default class LeftDrawer extends Component {
         contentEntry.sf_engelsktitel
           .toLowerCase()
           .includes(search.toLowerCase()) &&
-        contentEntry.indslagtypeid == eventType &&
+        contentEntry.indslagtypeid === eventType &&
+        (contentEntry.sf_level === filters.level || filters.level === "None") &&
+        (contentEntry.sf_kategori === filters.category ||
+          filters.category === "None") &&
         localMatches < matches
       ) {
         localMatches++;
@@ -168,14 +172,25 @@ export default class LeftDrawer extends Component {
         contentEntry.sf_engelsktitel
           .toLowerCase()
           .includes(search.toLowerCase()) &&
-        contentEntry.indslagtypeid == eventType
+        contentEntry.indslagtypeid === eventType &&
+        (contentEntry.sf_level === filters.level || filters.level === "None") &&
+        (contentEntry.sf_kategori === filters.category ||
+          filters.category === "None")
       ) {
         localMatches++;
       }
     });
     // if no matches
-    if (classes && classes[0] == undefined) {
-      classes = <ListItem>No classes found!</ListItem>;
+
+    if (classes && classes.every(cl => cl === undefined)) {
+      classes = (
+        <ListItem>
+          <ListItemIcon>
+            <NotificationsActive />
+          </ListItemIcon>
+          <ListItemText>No classes found!</ListItemText>
+        </ListItem>
+      );
     }
 
     // filterText
@@ -186,7 +201,7 @@ export default class LeftDrawer extends Component {
         filterCount++;
       }
     });
-    console.log("filterCount", filterCount);
+
     if (filterCount > 0) {
       filterText = (
         <p className="filter-text">{`${filterCount} filter(s) applied`}</p>
@@ -217,7 +232,7 @@ export default class LeftDrawer extends Component {
                     value={search}
                     name="level"
                     onChange={this.searchHandler}
-                    helperText={`Results: ${localMatches}`}
+                    helperText={`Matches: ${localMatches}`}
                   />
                 </Grid>
               </Grid>
@@ -227,6 +242,7 @@ export default class LeftDrawer extends Component {
                 <FilterList />
               </IconButton>
               {filterText}
+              <Avatar />
               <Popover open={isShowingFilters} onClose={this.toggleFilters}>
                 <Card>
                   <CardContent>

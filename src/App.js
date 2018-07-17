@@ -5,15 +5,12 @@ import "./Calendar.css";
 import "fullcalendar/dist/fullcalendar.min.css";
 import { Calendar, moment } from "fullcalendar";
 import {
-  ListItem,
   IconButton,
   Toolbar,
   AppBar,
   Tooltip,
   Select,
   MenuItem,
-  ListItemText,
-  Avatar,
   Card,
   CardContent,
   CardActions,
@@ -27,12 +24,15 @@ import {
   Delete,
   ZoomIn,
   ZoomOut,
-  Event
+  Event,
+  Add,
+  Build
 } from "@material-ui/icons";
 import IconMenu from "@material-ui/icons/Menu";
 import SelectTypeDialog from "./components/SelectTypeDialog/SelectTypeDialog";
 import CalendarDialog from "./components/CalendarDialog/CalendarDialog";
 import LeftDrawer from "./components/LeftDrawer/LeftDrawer";
+import SettingsDialog from "./components/SettingsDialog/SettingsDialog";
 
 class App extends Component {
   constructor(props) {
@@ -44,6 +44,7 @@ class App extends Component {
       isDrawerOpen: true,
       isTypeDialogOpen: false,
       isCalendarDialogOpen: false,
+      isSettingsDialogOpen: false,
       selectedEvent: null,
       selectedEventDetails: { duration: "", level: "", category: "" },
       selectedCalendar: 41,
@@ -88,17 +89,12 @@ class App extends Component {
     this.options.eventClick.bind(this);
     this.calendar = new Calendar(this.refCalendar.current, this.options);
     this.calendar.render();
-    this.addScrollListener();
   }
 
   eventClick(element, event) {
     console.log(element, event);
     this.setState({ selectedEvent: element, selectedEventDetails: event });
   }
-
-  addScrollListener = () => {
-    //
-  };
 
   eventRender = (event, element) => {
     element.style.backgroundImage = `url(${event.img})`;
@@ -133,16 +129,12 @@ class App extends Component {
   };
 
   fetchData = async (start, end, _, callback) => {
-    console.log(
-      `fetching data for time period ${start.format()} - ${end.format()}`
-    );
     const response = await axios.get("/v2/event");
 
-    const hello_empty = [];
+    const events = [];
     response.data.result.forEach(event => {
-      console.log("event", event);
+      //console.log("event", event);
       if (event.day_of_week) {
-        /* Clone view start */
         for (let i = start.clone(); i.isSameOrBefore(end); i.add("days", 8)) {
           const eventStart = i.clone();
 
@@ -173,16 +165,16 @@ class App extends Component {
           };
 
           if (
-            event.exceptions.length == 0 ||
+            event.exceptions.length === 0 ||
             event.exceptions.filter(
               exp => exp.start === this.formatDate(eventStart)
-            ).length == 0
+            ).length === 0
           ) {
-            hello_empty.push(newEvent);
+            events.push(newEvent);
           }
         }
       } else {
-        hello_empty.push(event);
+        events.push(event);
       }
     });
     /*
@@ -192,7 +184,7 @@ class App extends Component {
     }));
     console.table(print);
     */
-    callback(hello_empty);
+    callback(events);
   };
 
   formatDate = moment => {
@@ -201,7 +193,7 @@ class App extends Component {
 
   selectType = type => {
     type = "simple";
-    if (type == "simple") {
+    if (type === "simple") {
       this.calendar.option("header", false);
       this.calendar.option("columnFormat", "ddd");
     } else {
@@ -211,13 +203,12 @@ class App extends Component {
       });
       this.calendar.option("columnFormat", "ddd M/D");
     }
-    this.addScrollListener();
     this.setState({ type, isTypeDialogOpen: false });
   };
 
   toggleRecurring = event => {
     const { selectedEventDetails } = this.state;
-    if (selectedEventDetails.day_of_week == null) {
+    if (selectedEventDetails.day_of_week === null) {
       selectedEventDetails.day_of_week = 1;
     } else {
       selectedEventDetails.day_of_week = null;
@@ -237,9 +228,9 @@ class App extends Component {
   };
 
   zoomHandler = direction => {
-    if (direction == "in" && this.zoom > 0) {
+    if (direction === "in" && this.zoom > 0) {
       this.zoom--;
-    } else if (direction == "out" && this.zoom < 5) {
+    } else if (direction === "out" && this.zoom < 5) {
       this.zoom++;
     }
     switch (this.zoom) {
@@ -262,17 +253,11 @@ class App extends Component {
   };
 
   changeCalendarHandler = event => {
-    if (event.target.value == 0) {
-      this.toggleCalendarDialog();
-    }
     this.setState({ selectedCalendar: event.target.value });
   };
 
   toggleCalendarDialog = () => {
-    const { isCalendarDialogOpen, calendars } = this.state;
-    if (isCalendarDialogOpen && calendars.length > 0) {
-      this.setState({ selectedCalendar: calendars[0].id });
-    }
+    const { isCalendarDialogOpen } = this.state;
     this.setState({ isCalendarDialogOpen: !isCalendarDialogOpen });
   };
 
@@ -291,10 +276,17 @@ class App extends Component {
     this.setState({ isDrawerOpen: !isDrawerOpen });
   };
 
+  toggleSettingsMenu = () => {
+    const { isSettingsDialogOpen } = this.state;
+    console.log(isSettingsDialogOpen);
+    this.setState({ isSettingsDialogOpen: !isSettingsDialogOpen });
+  };
+
   render() {
     const {
       isDrawerOpen,
       isTypeDialogOpen,
+      isSettingsDialogOpen,
       selectedEvent,
       selectedEventDetails,
       type,
@@ -305,6 +297,10 @@ class App extends Component {
 
     return (
       <div className="App">
+        <LeftDrawer
+          toggleDrawerHandler={this.toggleDrawerHandler}
+          show={isDrawerOpen}
+        />
         <div
           className="calendar-container"
           style={{ marginLeft: isDrawerOpen ? "var(--calendarGutter)" : 30 }}
@@ -314,7 +310,7 @@ class App extends Component {
             style={{ boxShadow: "none", marginBottom: 5 }}
             color="inherit"
           >
-            <Toolbar>
+            <Toolbar id="toolbar">
               {!isDrawerOpen && (
                 <IconButton
                   color="inherit"
@@ -338,10 +334,17 @@ class App extends Component {
                       {calendar.name}
                     </MenuItem>
                   ))}
-                  <MenuItem value={0}>-- Add New Calendar --</MenuItem>
                 </Select>
+                <IconButton onClick={this.toggleCalendarDialog}>
+                  <Add />
+                </IconButton>
               </div>
               <div style={{ marginLeft: "auto" }}>
+                <Tooltip title="Settings">
+                  <IconButton onClick={this.toggleSettingsMenu}>
+                    <Build />
+                  </IconButton>
+                </Tooltip>
                 <IconButton onClick={() => this.zoomHandler("in")}>
                   <ZoomIn />
                 </IconButton>
@@ -355,7 +358,6 @@ class App extends Component {
                   style={{ marginLeft: 5 }}
                 >
                   <MenuItem value="agendaWeek">Week</MenuItem>
-                  <MenuItem value="listWeek">List Week</MenuItem>
                   <MenuItem value="agendaDay">Day</MenuItem>
                 </Select>
                 <Tooltip title="Toggle simple/advanced view">
@@ -379,10 +381,6 @@ class App extends Component {
           </AppBar>
           <div id="calendar" ref={this.refCalendar} />
         </div>
-        <LeftDrawer
-          toggleDrawerHandler={this.toggleDrawerHandler}
-          show={isDrawerOpen}
-        />
         <Popover
           anchorEl={selectedEvent ? selectedEvent : null}
           open={Boolean(selectedEvent)}
@@ -395,7 +393,7 @@ class App extends Component {
               <p>{selectedEventDetails.title}</p>
               <p>{selectedEventDetails.duration}</p>
               <p>{selectedEventDetails.level}</p>
-              {type == "advanced" && (
+              {type === "advanced" && (
                 <FormControlLabel
                   control={
                     <Switch
@@ -423,6 +421,10 @@ class App extends Component {
           calendars={this.state.calendars}
           toggleCalendarDialog={this.toggleCalendarDialog}
           addCalendar={this.addCalendar}
+        />
+        <SettingsDialog
+          toggleSettingsMenu={this.toggleSettingsMenu}
+          show={isSettingsDialogOpen}
         />
       </div>
     );
