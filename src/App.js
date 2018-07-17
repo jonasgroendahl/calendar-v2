@@ -14,8 +14,6 @@ import {
   Card,
   CardContent,
   CardActions,
-  Switch,
-  FormControlLabel,
   Popover
 } from "@material-ui/core";
 import {
@@ -156,6 +154,7 @@ class App extends Component {
             end: eventEnd,
             title: event.title,
             day_of_week: event.day_of_week,
+            seperation_count: event.seperation_count,
             img: `https://nfoo-server.com/wexerpreview/${
               event.sf_masterid
             }_${event.navn.substr(0, event.navn.length - 4)}Square.jpg`,
@@ -192,7 +191,6 @@ class App extends Component {
   };
 
   selectType = type => {
-    type = "simple";
     if (type === "simple") {
       this.calendar.option("header", false);
       this.calendar.option("columnFormat", "ddd");
@@ -206,13 +204,10 @@ class App extends Component {
     this.setState({ type, isTypeDialogOpen: false });
   };
 
-  toggleRecurring = event => {
+  changeRecurringPattern = event => {
     const { selectedEventDetails } = this.state;
-    if (selectedEventDetails.day_of_week === null) {
-      selectedEventDetails.day_of_week = 1;
-    } else {
-      selectedEventDetails.day_of_week = null;
-    }
+    selectedEventDetails.seperation_count = event.target.value;
+    this.calendar.updateEvent(selectedEventDetails);
     this.setState({ selectedEventDetails });
   };
 
@@ -278,7 +273,6 @@ class App extends Component {
 
   toggleSettingsMenu = () => {
     const { isSettingsDialogOpen } = this.state;
-    console.log(isSettingsDialogOpen);
     this.setState({ isSettingsDialogOpen: !isSettingsDialogOpen });
   };
 
@@ -394,15 +388,16 @@ class App extends Component {
               <p>{selectedEventDetails.duration}</p>
               <p>{selectedEventDetails.level}</p>
               {type === "advanced" && (
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={selectedEventDetails.day_of_week ? true : false}
-                      onChange={this.toggleRecurring}
-                    />
-                  }
-                  label="Recurring event"
-                />
+                <Select
+                  disableUnderline
+                  value={selectedEventDetails.seperation_count}
+                  onChange={this.changeRecurringPattern}
+                >
+                  <MenuItem dense value={0}>
+                    Doesn't repeat
+                  </MenuItem>
+                  <MenuItem value={1}>Repeat weekly</MenuItem>
+                </Select>
               )}
             </CardContent>
             <CardActions>
