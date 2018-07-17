@@ -4,22 +4,14 @@ import "./App.css";
 import "./Calendar.css";
 import "fullcalendar/dist/fullcalendar.min.css";
 import { Calendar, moment } from "fullcalendar";
-import dragula from "fullcalendar/dist/dragula.min.js";
 import {
-  Drawer,
-  List,
   ListItem,
-  Divider,
   IconButton,
   Toolbar,
   AppBar,
   Tooltip,
-  TextField,
-  FormControl,
-  Grid,
   Select,
   MenuItem,
-  InputLabel,
   ListItemText,
   Avatar,
   Card,
@@ -27,27 +19,20 @@ import {
   CardActions,
   Switch,
   FormControlLabel,
-  Popover,
-  BottomNavigation,
-  BottomNavigationAction,
-  Badge
+  Popover
 } from "@material-ui/core";
 import {
-  ChevronRight,
   Layers,
-  Search,
   Cloud,
   Delete,
   ZoomIn,
   ZoomOut,
-  Event,
-  Videocam,
-  Person,
-  Favorite
+  Event
 } from "@material-ui/icons";
 import IconMenu from "@material-ui/icons/Menu";
 import SelectTypeDialog from "./components/SelectTypeDialog/SelectTypeDialog";
 import CalendarDialog from "./components/CalendarDialog/CalendarDialog";
+import LeftDrawer from "./components/LeftDrawer/LeftDrawer";
 
 class App extends Component {
   constructor(props) {
@@ -56,14 +41,9 @@ class App extends Component {
     this.calendar = null;
     this.zoom = 2;
     this.state = {
-      isDrawingOpen: true,
+      isDrawerOpen: true,
       isTypeDialogOpen: false,
       isCalendarDialogOpen: false,
-      levels: ["None", "For everyone", "Beginner", "Intermediate", "Advanced"],
-      filters: {
-        level: "None"
-      },
-      content: [],
       selectedEvent: null,
       selectedEventDetails: { duration: "", level: "", category: "" },
       selectedCalendar: 41,
@@ -73,10 +53,7 @@ class App extends Component {
       ],
       type: "simple",
       view: "agendaWeek",
-      showEventType: 0,
-      search: "",
-      matches: 10,
-      eventType: 3
+      showEventType: 0
     };
   }
 
@@ -112,26 +89,6 @@ class App extends Component {
     this.calendar = new Calendar(this.refCalendar.current, this.options);
     this.calendar.render();
     this.addScrollListener();
-    const content = await axios.get("/v2/content");
-    console.log(content);
-    this.setState({ content: content.data });
-  }
-
-  componentDidUpdate(_, prevState) {
-    if (prevState.content.length == 0 && this.state.content.length > 0) {
-      console.log("Content was added, making them draggable");
-      const draggableEvents = document.querySelector(".test");
-      dragula([draggableEvents], { copy: true });
-      draggableEvents.addEventListener("scroll", event => {
-        if (
-          event.target.clientHeight + event.target.scrollTop >=
-          event.target.scrollHeight
-        ) {
-          const { matches } = this.state;
-          this.setState({ matches: matches + 10 });
-        }
-      });
-    }
   }
 
   eventClick(element, event) {
@@ -258,12 +215,6 @@ class App extends Component {
     this.setState({ type, isTypeDialogOpen: false });
   };
 
-  onLevelChange = event => {
-    const { filters } = this.state;
-    filters.level = event.target.value;
-    this.setState({ filters });
-  };
-
   toggleRecurring = event => {
     const { selectedEventDetails } = this.state;
     if (selectedEventDetails.day_of_week == null) {
@@ -335,92 +286,28 @@ class App extends Component {
     this.setState({ calendars });
   };
 
-  searchHandler = event => {
-    this.setState({ search: event.target.value, matches: 10 });
-  };
-
-  onEventTypeChange = (_, value) => {
-    console.log(value);
-    let eventType = 3;
-    if (value == 1) {
-      eventType = 100;
-    } else if (value == 2) {
-      eventType = 5;
-    }
-    this.setState({ showEventType: value, eventType });
+  toggleDrawerHandler = () => {
+    const { isDrawerOpen } = this.state;
+    this.setState({ isDrawerOpen: !isDrawerOpen });
   };
 
   render() {
     const {
-      isDrawingOpen,
+      isDrawerOpen,
       isTypeDialogOpen,
-      levels,
-      filters,
       selectedEvent,
       selectedEventDetails,
       type,
       view,
       selectedCalendar,
-      isCalendarDialogOpen,
-      search,
-      matches,
-      eventType
+      isCalendarDialogOpen
     } = this.state;
-
-    let localMatches = 0;
-    let classes = [];
-    classes = this.state.content.map(contentEntry => {
-      if (
-        contentEntry.sf_engelsktitel
-          .toLowerCase()
-          .includes(search.toLowerCase()) &&
-        contentEntry.indslagtypeid == eventType &&
-        localMatches < matches
-      ) {
-        localMatches++;
-        return (
-          <ListItem
-            className="event"
-            button
-            data-event={`{ "title" : "${
-              contentEntry.sf_engelsktitel
-            }", "duration" : "${contentEntry.sf_varighed}", "video_id" : ${
-              contentEntry.indslagid
-            }, "sf_masterid" : ${contentEntry.sf_masterid}, "navn" : "${
-              contentEntry.navn
-            }", 
-            "level": "${contentEntry.sf_level}"}`}
-          >
-            <Avatar
-              src={`https://nfoo-server.com/wexerpreview/${
-                contentEntry.sf_masterid
-              }_${contentEntry.navn.substr(
-                0,
-                contentEntry.navn.length - 4
-              )}Square.jpg`}
-            />
-            <ListItemText>{contentEntry.sf_engelsktitel}</ListItemText>
-          </ListItem>
-        );
-      } else if (
-        contentEntry.sf_engelsktitel
-          .toLowerCase()
-          .includes(search.toLowerCase()) &&
-        contentEntry.indslagtypeid == eventType
-      ) {
-        localMatches++;
-      }
-    });
-    // if no matches
-    if (classes && classes[0] == undefined) {
-      classes = <ListItem>No classes found!</ListItem>;
-    }
 
     return (
       <div className="App">
         <div
           className="calendar-container"
-          style={{ marginLeft: isDrawingOpen ? "var(--calendarGutter)" : 30 }}
+          style={{ marginLeft: isDrawerOpen ? "var(--calendarGutter)" : 30 }}
         >
           <AppBar
             position="static"
@@ -428,12 +315,10 @@ class App extends Component {
             color="inherit"
           >
             <Toolbar>
-              {!isDrawingOpen && (
+              {!isDrawerOpen && (
                 <IconButton
                   color="inherit"
-                  onClick={() =>
-                    this.setState({ isDrawingOpen: !this.state.isDrawingOpen })
-                  }
+                  onClick={this.toggleDrawerHandler}
                   style={{ marginRight: 10 }}
                 >
                   <IconMenu />
@@ -494,103 +379,10 @@ class App extends Component {
           </AppBar>
           <div id="calendar" ref={this.refCalendar} />
         </div>
-        <Drawer
-          id="leftdrawer"
-          variant="persistent"
-          anchor="left"
-          open={isDrawingOpen}
-          PaperProps={{ style: { maxWidth: 294 } }}
-        >
-          <div>
-            <IconButton
-              onClick={() =>
-                this.setState({ isDrawingOpen: !this.state.isDrawingOpen })
-              }
-            >
-              <ChevronRight />
-            </IconButton>
-            <Divider />
-            <List style={{ paddingTop: 0 }}>
-              <ListItem style={{ paddingTop: 0 }}>
-                <Grid container spacing={8} alignItems="flex-end">
-                  <Grid item>
-                    <Search />
-                  </Grid>
-                  <Grid item>
-                    <TextField
-                      label="Search"
-                      value={search}
-                      onChange={this.searchHandler}
-                      helperText={`Results: ${localMatches}`}
-                    />
-                  </Grid>
-                </Grid>
-              </ListItem>
-              <ListItem>
-                <FormControl fullWidth>
-                  <InputLabel>Filter by Level</InputLabel>
-                  <Select
-                    onChange={this.onLevelChange}
-                    value={filters.level}
-                    label="Filter by level"
-                  >
-                    {levels.map(level => (
-                      <MenuItem value={level}>{level}</MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </ListItem>
-              <ListItem>
-                <FormControl fullWidth>
-                  <InputLabel>Filter by Level</InputLabel>
-                  <Select
-                    onChange={this.onLevelChange}
-                    value={filters.level}
-                    label="Filter by level"
-                  >
-                    {levels.map(level => (
-                      <MenuItem value={level}>{level}</MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </ListItem>
-              <ListItem>
-                <FormControl fullWidth>
-                  <InputLabel>Filter by Level</InputLabel>
-                  <Select
-                    onChange={this.onLevelChange}
-                    value={filters.level}
-                    label="Filter by level"
-                  >
-                    {levels.map(level => (
-                      <MenuItem value={level}>{level}</MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </ListItem>
-              <div className="test">{classes}</div>
-              <BottomNavigation
-                value={this.state.showEventType}
-                onChange={this.onEventTypeChange}
-                showLabels
-              >
-                <BottomNavigationAction label="Classes" icon={<Videocam />} />
-                <BottomNavigationAction label="Own classes" icon={<Person />} />
-                <BottomNavigationAction label="Favorites" icon={<Favorite />} />
-              </BottomNavigation>
-            </List>
-          </div>
-          <SelectTypeDialog
-            show={isTypeDialogOpen}
-            selectType={this.selectType}
-          />
-          <CalendarDialog
-            show={isCalendarDialogOpen}
-            calendars={this.state.calendars}
-            toggleCalendarDialog={this.toggleCalendarDialog}
-            addCalendar={this.addCalendar}
-          />
-        </Drawer>
+        <LeftDrawer
+          toggleDrawerHandler={this.toggleDrawerHandler}
+          show={isDrawerOpen}
+        />
         <Popover
           anchorEl={selectedEvent ? selectedEvent : null}
           open={Boolean(selectedEvent)}
@@ -622,6 +414,16 @@ class App extends Component {
             </CardActions>
           </Card>
         </Popover>
+        <SelectTypeDialog
+          show={isTypeDialogOpen}
+          selectType={this.selectType}
+        />
+        <CalendarDialog
+          show={isCalendarDialogOpen}
+          calendars={this.state.calendars}
+          toggleCalendarDialog={this.toggleCalendarDialog}
+          addCalendar={this.addCalendar}
+        />
       </div>
     );
   }

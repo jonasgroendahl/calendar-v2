@@ -7,7 +7,7 @@
 }
 
 .test {
-  height: calc(100vh - 410px);
+  height: calc(100vh - 272px);
   overflow: auto;
 }
 
@@ -39,6 +39,11 @@
 .calendar-picker-div {
   display: flex;
   align-items: center;
+}
+
+.filter-text {
+  color: gray;
+  font-size: 0.8rem;
 }
 
 @keyframes App-logo-spin {
