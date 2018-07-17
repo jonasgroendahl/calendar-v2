@@ -38,7 +38,7 @@ export default class LeftDrawer extends Component {
     },
     content: [],
     search: "",
-    matches: 10,
+    matches: 12,
     eventType: 3,
     content: [],
     levels: [
@@ -57,7 +57,8 @@ export default class LeftDrawer extends Component {
       { value: "Cycling (Cycling)", text: "Cycling" },
       { value: "Strong and firm(Conditioning)", text: "Conditioning" }
     ],
-    isShowingFilters: false
+    isShowingFilters: false,
+    showEventType: 0
   };
 
   async componentDidMount() {
@@ -124,7 +125,8 @@ export default class LeftDrawer extends Component {
       eventType,
       content,
       isShowingFilters,
-      categories
+      categories,
+      showEventType
     } = this.state;
 
     let localMatches = 0;
@@ -270,7 +272,7 @@ export default class LeftDrawer extends Component {
             </ListItem>
             <div className="test">{classes}</div>
             <BottomNavigation
-              value={this.state.showEventType}
+              value={showEventType}
               onChange={this.onEventTypeChange}
               showLabels
             >
