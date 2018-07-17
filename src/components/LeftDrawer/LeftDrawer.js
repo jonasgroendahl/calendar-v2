@@ -18,7 +18,8 @@ import {
   Popover,
   Card,
   CardContent,
-  ListItemIcon
+  ListItemIcon,
+  Tooltip
 } from "@material-ui/core";
 import {
   Search,
@@ -27,7 +28,8 @@ import {
   Person,
   Favorite,
   FilterList,
-  NotificationsActive
+  NotificationsActive,
+  Clear
 } from "@material-ui/icons";
 import axios from "./../../axios";
 import dragula from "fullcalendar/dist/dragula.min.js";
@@ -115,6 +117,12 @@ export default class LeftDrawer extends Component {
   toggleFilters = () => {
     const { isShowingFilters } = this.state;
     this.setState({ isShowingFilters: !isShowingFilters });
+  };
+
+  clearFilterHandler = () => {
+    const { filters } = this.state;
+    Object.keys(filters).forEach(filter => (filters[filter] = "None"));
+    this.setState({ filters });
   };
 
   render() {
@@ -280,6 +288,13 @@ export default class LeftDrawer extends Component {
                             ))}
                           </Select>
                         </FormControl>
+                      </Grid>
+                      <Grid item>
+                        <Tooltip title="Clear filters">
+                          <IconButton onClick={this.clearFilterHandler}>
+                            <Clear />
+                          </IconButton>
+                        </Tooltip>
                       </Grid>
                     </Grid>
                   </CardContent>
