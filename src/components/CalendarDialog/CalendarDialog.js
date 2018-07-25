@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React, { PureComponent } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -11,7 +11,7 @@ import {
 } from "../../../node_modules/@material-ui/core";
 import "./CalendarDialog.css";
 
-export default class CalendarDialog extends Component {
+export default class CalendarDialog extends PureComponent {
   state = {
     calendar_clone: 0,
     calendar_name: ""

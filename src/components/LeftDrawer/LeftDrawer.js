@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React, { PureComponent } from "react";
 import {
   Drawer,
   List,
@@ -19,7 +19,9 @@ import {
   Card,
   CardContent,
   ListItemIcon,
-  Tooltip
+  Tooltip,
+  Button,
+  CardActions
 } from "@material-ui/core";
 import {
   Search,
@@ -34,7 +36,7 @@ import {
 import axios from "./../../axios";
 import dragula from "fullcalendar/dist/dragula.min.js";
 
-export default class LeftDrawer extends Component {
+export default class LeftDrawer extends PureComponent {
   state = {
     filters: {
       level: "None",
@@ -44,7 +46,6 @@ export default class LeftDrawer extends Component {
     search: "",
     matches: 12,
     eventType: 3,
-    content: [],
     levels: [
       { value: "None", text: "None" },
       { value: "For everyone", text: "For everyone" },
@@ -88,9 +89,9 @@ export default class LeftDrawer extends Component {
   }
 
   filterChangeHandler = event => {
-    const { filters } = this.state;
+    const filters = { ...this.state.filters };
     filters[event.target.name] = event.target.value;
-    console.log(event.target.name);
+    console.log(event.target.name, event.target.value);
     this.setState({ filters });
   };
 
@@ -120,7 +121,7 @@ export default class LeftDrawer extends Component {
   };
 
   clearFilterHandler = () => {
-    const { filters } = this.state;
+    const filters = { ...this.state.filters };
     Object.keys(filters).forEach(filter => (filters[filter] = "None"));
     this.setState({ filters });
   };
@@ -158,20 +159,21 @@ export default class LeftDrawer extends Component {
             button
             data-event={`{ "title" : "${
               contentEntry.sf_engelsktitel
-            }", "duration" : "${contentEntry.sf_varighed}", "video_id" : ${
+              }", "duration" : "${contentEntry.sf_varighed}", "video_id" : ${
               contentEntry.indslagid
-            }, "sf_masterid" : ${contentEntry.sf_masterid}, "navn" : "${
+              }, "sf_masterid" : ${contentEntry.sf_masterid}, "navn" : "${
               contentEntry.navn
-            }", 
+              }", 
             "level": "${contentEntry.sf_level}"}`}
+            key={contentEntry.indslagid}
           >
             <Avatar
               src={`https://nfoo-server.com/wexerpreview/${
                 contentEntry.sf_masterid
-              }_${contentEntry.navn.substr(
-                0,
-                contentEntry.navn.length - 4
-              )}Square.jpg`}
+                }_${contentEntry.navn.substr(
+                  0,
+                  contentEntry.navn.length - 4
+                )}Square.jpg`}
             />
             <ListItemText>{contentEntry.sf_engelsktitel}</ListItemText>
           </ListItem>
@@ -186,11 +188,15 @@ export default class LeftDrawer extends Component {
           filters.category === "None")
       ) {
         localMatches++;
+        return null;
+      }
+      else {
+        return null;
       }
     });
     // if no matches
 
-    if (classes && classes.every(cl => cl === undefined)) {
+    if (classes && classes.every(cl => cl === null)) {
       classes = (
         <ListItem>
           <ListItemIcon>
@@ -221,12 +227,13 @@ export default class LeftDrawer extends Component {
         variant="persistent"
         anchor="left"
         open={this.props.show}
-        PaperProps={{ style: { maxWidth: 294 } }}
+        PaperProps={{ style: { width: 290 } }}
       >
         <div>
           <IconButton onClick={this.props.toggleDrawerHandler}>
             <ChevronRight />
           </IconButton>
+        </div>
           <Divider />
           <List style={{ paddingTop: 0 }}>
             <ListItem style={{ paddingTop: 3 }}>
@@ -266,7 +273,7 @@ export default class LeftDrawer extends Component {
                             disableUnderline
                           >
                             {levels.map(level => (
-                              <MenuItem value={level.value}>
+                              <MenuItem value={level.value} key={`level_${level.text}`}>
                                 {level.text}
                               </MenuItem>
                             ))}
@@ -284,7 +291,7 @@ export default class LeftDrawer extends Component {
                             disableUnderline
                           >
                             {categories.map(cat => (
-                              <MenuItem value={cat.value}>{cat.text}</MenuItem>
+                              <MenuItem value={cat.value} key={`cat_${cat.text}`}>{cat.text}</MenuItem>
                             ))}
                           </Select>
                         </FormControl>
@@ -298,6 +305,9 @@ export default class LeftDrawer extends Component {
                       </Grid>
                     </Grid>
                   </CardContent>
+                  <CardActions style={{justifyContent: 'flex-end'}}>
+                    <Button color="primary" onClick={this.toggleFilters}>Cancel</Button>
+                  </CardActions>
                 </Card>
               </Popover>
             </ListItem>
@@ -312,7 +322,7 @@ export default class LeftDrawer extends Component {
               <BottomNavigationAction label="Favorites" icon={<Favorite />} />
             </BottomNavigation>
           </List>
-        </div>
+
       </Drawer>
     );
   }

@@ -1,7 +1,7 @@
-import React, { Component } from "react";
+import React, { PureComponent } from "react";
 import { Dialog, DialogTitle, DialogContent } from "@material-ui/core";
 
-export default class SettingsDialog extends Component {
+export default class SettingsDialog extends PureComponent {
   render() {
     return (
       <Dialog

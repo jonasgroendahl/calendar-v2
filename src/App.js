@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React, { PureComponent } from "react";
 import axios from "./axios";
 import "./App.css";
 import "./Calendar.css";
@@ -32,7 +32,7 @@ import CalendarDialog from "./components/CalendarDialog/CalendarDialog";
 import LeftDrawer from "./components/LeftDrawer/LeftDrawer";
 import SettingsDialog from "./components/SettingsDialog/SettingsDialog";
 
-class App extends Component {
+class App extends PureComponent {
   constructor(props) {
     super(props);
     this.refCalendar = React.createRef();
@@ -72,14 +72,14 @@ class App extends Component {
       slotDuration: "00:10:00",
       height: "parent",
       droppable: true,
-      viewChange: function() {
+      viewChange: function () {
         this.calendar.rerenderEvents();
       },
       eventReceive: event => this.eventReceive(event),
-      eventClick: function(event) {
+      eventClick: function (event) {
         self.eventClick(this, event);
       },
-      eventResize: function() {
+      eventResize: function () {
         self.setState({ selectedEvent: null });
       },
       eventRender: (event, element) => this.eventRender(event, element)
@@ -105,7 +105,7 @@ class App extends Component {
     let day_of_week = 0;
     event.img = `https://nfoo-server.com/wexerpreview/${
       event.sf_masterid
-    }_${event.navn.substr(0, event.navn.length - 4)}Square.jpg`;
+      }_${event.navn.substr(0, event.navn.length - 4)}Square.jpg`;
     day_of_week = event.start.isoWeekday();
 
     const payload = {
@@ -131,15 +131,14 @@ class App extends Component {
 
     const events = [];
     response.data.result.forEach(event => {
-      //console.log("event", event);
       if (event.day_of_week) {
-        for (let i = start.clone(); i.isSameOrBefore(end); i.add("days", 8)) {
+        for (let i = start.clone(); i.isSameOrBefore(end); i.add(8, "days")) {
           const eventStart = i.clone();
-
           const eventStartMoment = moment(event.start);
 
           eventStart.isoWeekday(event.day_of_week);
           const duration = moment(event.end).diff(moment(event.start));
+
 
           eventStart.hours(eventStartMoment.hours());
           eventStart.minutes(eventStartMoment.minutes());
@@ -155,9 +154,9 @@ class App extends Component {
             title: event.title,
             day_of_week: event.day_of_week,
             seperation_count: event.seperation_count,
-            img: `https://nfoo-server.com/wexerpreview/${
+            img: event.sf_masterid ? `https://nfoo-server.com/wexerpreview/${
               event.sf_masterid
-            }_${event.navn.substr(0, event.navn.length - 4)}Square.jpg`,
+              }_${event.navn.substr(0, event.navn.length - 4)}Square.jpg` : 'https://historielaerer.dk/wp-content/plugins/wp-ulike/assets/img/no-thumbnail.png',
             duration: event.sf_varighed,
             level: event.sf_level,
             category: event.sf_kategori
@@ -176,6 +175,7 @@ class App extends Component {
         events.push(event);
       }
     });
+    console.log(events);
     /*
     const print = hello_empty.map(h => ({
       start: h.start.format(),
