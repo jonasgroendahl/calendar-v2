@@ -2,6 +2,24 @@
   --calendarGutter: 300px;
 }
 
+@keyframes ringing {
+  0%, 100% {
+    transform: rotate(0)
+  }
+  
+  20% {
+    transform: rotate(10deg)
+  }
+  
+  40%, 80% {
+    transform: rotate(-6deg);
+  }
+  
+  60% {
+    transform: rotate(6deg);
+  }
+}
+
 .App {
   text-align: center;
 }
@@ -59,12 +77,12 @@
 @media (max-width: 600px) {
   #leftdrawer > div {
     position: static;
-    width: auto;
-    max-width: none !important;
+    width: auto !important;
   }
   .calendar-container {
     margin-left: 0 !important;
     height: auto;
+    min-height: 100vh;
   }
   #toolbar {
     flex-flow: row wrap;

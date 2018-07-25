@@ -199,7 +199,7 @@ export default class LeftDrawer extends PureComponent {
     if (classes && classes.every(cl => cl === null)) {
       classes = (
         <ListItem>
-          <ListItemIcon>
+          <ListItemIcon style={{ animation: '2s ringing infinite' }}>
             <NotificationsActive />
           </ListItemIcon>
           <ListItemText>No classes found!</ListItemText>
@@ -234,94 +234,94 @@ export default class LeftDrawer extends PureComponent {
             <ChevronRight />
           </IconButton>
         </div>
-          <Divider />
-          <List style={{ paddingTop: 0 }}>
-            <ListItem style={{ paddingTop: 3 }}>
-              <Grid container spacing={8} alignItems="flex-end">
-                <Grid item style={{ marginBottom: 8 }}>
-                  <Search />
-                </Grid>
-                <Grid item>
-                  <TextField
-                    label="Search"
-                    value={search}
-                    name="level"
-                    onChange={this.searchHandler}
-                    helperText={`Matches: ${localMatches}`}
-                  />
-                </Grid>
+        <Divider />
+        <List style={{ paddingTop: 0 }}>
+          <ListItem style={{ paddingTop: 3 }}>
+            <Grid container spacing={8} alignItems="flex-end">
+              <Grid item style={{ marginBottom: 8 }}>
+                <Search />
               </Grid>
-            </ListItem>
-            <ListItem>
-              <IconButton onClick={this.toggleFilters}>
-                <FilterList />
-              </IconButton>
-              {filterText}
-              <Avatar />
-              <Popover open={isShowingFilters} onClose={this.toggleFilters}>
-                <Card>
-                  <CardContent>
-                    <Grid container>
-                      <Grid item style={{ minWidth: 150, marginRight: 5 }}>
-                        <FormControl fullWidth>
-                          <InputLabel>Filter by Level</InputLabel>
-                          <Select
-                            onChange={this.filterChangeHandler}
-                            value={filters.level}
-                            name="level"
-                            label="Filter by level"
-                            disableUnderline
-                          >
-                            {levels.map(level => (
-                              <MenuItem value={level.value} key={`level_${level.text}`}>
-                                {level.text}
-                              </MenuItem>
-                            ))}
-                          </Select>
-                        </FormControl>
-                      </Grid>
-                      <Grid item style={{ minWidth: 150, marginRight: 5 }}>
-                        <FormControl fullWidth>
-                          <InputLabel>Filter by Category</InputLabel>
-                          <Select
-                            onChange={this.filterChangeHandler}
-                            value={filters.category}
-                            name="category"
-                            label="Filter by category"
-                            disableUnderline
-                          >
-                            {categories.map(cat => (
-                              <MenuItem value={cat.value} key={`cat_${cat.text}`}>{cat.text}</MenuItem>
-                            ))}
-                          </Select>
-                        </FormControl>
-                      </Grid>
-                      <Grid item>
-                        <Tooltip title="Clear filters">
-                          <IconButton onClick={this.clearFilterHandler}>
-                            <Clear />
-                          </IconButton>
-                        </Tooltip>
-                      </Grid>
+              <Grid item>
+                <TextField
+                  label="Search"
+                  value={search}
+                  name="level"
+                  onChange={this.searchHandler}
+                  helperText={`Matches: ${localMatches}`}
+                />
+              </Grid>
+            </Grid>
+          </ListItem>
+          <ListItem>
+            <IconButton onClick={this.toggleFilters}>
+              <FilterList />
+            </IconButton>
+            {filterText}
+            <Avatar />
+            <Popover open={isShowingFilters} onClose={this.toggleFilters}>
+              <Card>
+                <CardContent>
+                  <Grid container>
+                    <Grid item style={{ minWidth: 150, marginRight: 5 }}>
+                      <FormControl fullWidth>
+                        <InputLabel>Filter by Level</InputLabel>
+                        <Select
+                          onChange={this.filterChangeHandler}
+                          value={filters.level}
+                          name="level"
+                          label="Filter by level"
+                          disableUnderline
+                        >
+                          {levels.map(level => (
+                            <MenuItem value={level.value} key={`level_${level.text}`}>
+                              {level.text}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
                     </Grid>
-                  </CardContent>
-                  <CardActions style={{justifyContent: 'flex-end'}}>
-                    <Button color="primary" onClick={this.toggleFilters}>Cancel</Button>
-                  </CardActions>
-                </Card>
-              </Popover>
-            </ListItem>
-            <div className="test">{classes}</div>
-            <BottomNavigation
-              value={showEventType}
-              onChange={this.onEventTypeChange}
-              showLabels
-            >
-              <BottomNavigationAction label="Classes" icon={<Videocam />} />
-              <BottomNavigationAction label="Own classes" icon={<Person />} />
-              <BottomNavigationAction label="Favorites" icon={<Favorite />} />
-            </BottomNavigation>
-          </List>
+                    <Grid item style={{ minWidth: 150, marginRight: 5 }}>
+                      <FormControl fullWidth>
+                        <InputLabel>Filter by Category</InputLabel>
+                        <Select
+                          onChange={this.filterChangeHandler}
+                          value={filters.category}
+                          name="category"
+                          label="Filter by category"
+                          disableUnderline
+                        >
+                          {categories.map(cat => (
+                            <MenuItem value={cat.value} key={`cat_${cat.text}`}>{cat.text}</MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                    </Grid>
+                    <Grid item>
+                      <Tooltip title="Clear filters">
+                        <IconButton onClick={this.clearFilterHandler}>
+                          <Clear />
+                        </IconButton>
+                      </Tooltip>
+                    </Grid>
+                  </Grid>
+                </CardContent>
+                <CardActions style={{ justifyContent: 'flex-end' }}>
+                  <Button color="primary" onClick={this.toggleFilters}>Cancel</Button>
+                </CardActions>
+              </Card>
+            </Popover>
+          </ListItem>
+          <div className="test">{classes}</div>
+          <BottomNavigation
+            value={showEventType}
+            onChange={this.onEventTypeChange}
+            showLabels
+          >
+            <BottomNavigationAction label="Classes" icon={<Videocam />} />
+            <BottomNavigationAction label="Own classes" icon={<Person />} />
+            <BottomNavigationAction label="Favorites" icon={<Favorite />} />
+          </BottomNavigation>
+        </List>
 
       </Drawer>
     );
