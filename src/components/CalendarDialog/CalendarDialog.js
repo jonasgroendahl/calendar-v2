@@ -55,7 +55,12 @@ export default class CalendarDialog extends PureComponent {
         </DialogContent>
         <DialogActions>
           <Button
-            variant="contained"
+            color="primary"
+            onClick={this.props.toggleCalendarDialog}
+          >
+            Cancel
+          </Button>
+          <Button
             color="primary"
             onClick={() => this.props.addCalendar(this.state.calendar_name)}
           >

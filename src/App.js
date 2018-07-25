@@ -14,17 +14,27 @@ import {
   Card,
   CardContent,
   CardActions,
-  Popover
+  Popover,
+  ListItem,
+  List,
+  ListItemText,
+  Avatar,
+  Button
 } from "@material-ui/core";
 import {
   Layers,
   Cloud,
   Delete,
   ZoomIn,
-  ZoomOut,
   Event,
   Add,
-  Build
+  ZoomOut,
+  Build,
+  SignalCellular1Bar,
+  SignalCellular2Bar,
+  SignalCellular0Bar,
+  Timer,
+  Title
 } from "@material-ui/icons";
 import IconMenu from "@material-ui/icons/Menu";
 import SelectTypeDialog from "./components/SelectTypeDialog/SelectTypeDialog";
@@ -318,7 +328,7 @@ class App extends PureComponent {
               )}
               <div className="calendar-picker-div">
                 <Tooltip title="Les Mills Player">
-                  <Event style={{ marginRight: 5 }} />
+                  <Event style={{ marginRight: 10 }} />
                 </Tooltip>
                 <Select
                   disableUnderline
@@ -386,9 +396,31 @@ class App extends PureComponent {
         >
           <Card style={{ width: 300 }}>
             <CardContent>
-              <p>{selectedEventDetails.title}</p>
-              <p>{selectedEventDetails.duration}</p>
-              <p>{selectedEventDetails.level}</p>
+              <List>
+                <ListItem>
+                  <Avatar>
+                    <Title />
+                  </Avatar>
+                  <ListItemText>{selectedEventDetails.title}</ListItemText>
+                </ListItem>
+                <ListItem>
+                  <Avatar>
+                    <Timer />
+                  </Avatar>
+                  <ListItemText primary={moment(`01-01-1991 ${selectedEventDetails.duration}`).format('mm:ss')} />
+                </ListItem>
+                <ListItem>
+                  <Avatar>
+                    {selectedEventDetails.level === 'Beginner' ?
+                      <SignalCellular1Bar />
+                      : selectedEventDetails.level === 'Intermediate' ?
+                        <SignalCellular2Bar /> :
+                        <SignalCellular0Bar />
+                    }
+                  </Avatar>
+                  <ListItemText primary={selectedEventDetails.level} />
+                </ListItem>
+              </List>
               {type === "advanced" && (
                 <Select
                   disableUnderline
@@ -403,9 +435,9 @@ class App extends PureComponent {
               )}
             </CardContent>
             <CardActions>
-              <IconButton onClick={this.onEventDelete}>
-                <Delete />
-              </IconButton>
+              <Button onClick={this.onEventDelete} color="primary">
+                <Delete style={{ marginRight: 10 }} /> Delete
+              </Button>
             </CardActions>
           </Card>
         </Popover>
