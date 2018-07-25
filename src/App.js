@@ -103,8 +103,8 @@ class App extends PureComponent {
   }
 
   eventMove = async (event, delta) => {
-    const res = await axios.put(`/v2/event/${event.id}`, { start: this.formatDate(event.start), end: this.formatDate(event.end)});
-    console.log("mooove",res);
+    const res = await axios.put(`/v2/event/${event.id}`, { start: this.formatDate(event.start), end: this.formatDate(event.end), day_of_week: event.start.isoWeekday() });
+    console.log("mooove", res);
   }
 
   eventClick(element, event) {
