@@ -87,18 +87,24 @@ class App extends PureComponent {
       viewChange: function () {
         this.calendar.rerenderEvents();
       },
-      eventReceive: event => this.eventReceive(event),
+      eventReceive: this.eventReceive,
       eventClick: function (event) {
         self.eventClick(this, event);
       },
       eventResize: function () {
         self.setState({ selectedEvent: null });
       },
-      eventRender: (event, element) => this.eventRender(event, element)
+      eventRender: this.eventRender,
+      eventDrop: this.eventMove
     };
     this.options.eventClick.bind(this);
     this.calendar = new Calendar(this.refCalendar.current, this.options);
     this.calendar.render();
+  }
+
+  eventMove = async (event, delta) => {
+    const res = await axios.put(`/v2/event/${event.id}`, { start: this.formatDate(event.start), end: this.formatDate(event.end)});
+    console.log("mooove",res);
   }
 
   eventClick(element, event) {
