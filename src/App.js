@@ -22,7 +22,6 @@ import {
   Button
 } from "@material-ui/core";
 import {
-  Layers,
   Cloud,
   Delete,
   ZoomIn,
@@ -84,14 +83,14 @@ class App extends PureComponent {
       snapDuration: "00:01:00",
       height: "parent",
       droppable: true,
-      viewChange: function () {
+      viewChange: function() {
         this.calendar.rerenderEvents();
       },
       eventReceive: this.eventReceive,
-      eventClick: function (event) {
+      eventClick: function(event) {
         self.eventClick(this, event);
       },
-      eventResize: function () {
+      eventResize: function() {
         self.setState({ selectedEvent: null });
       },
       eventRender: this.eventRender,
@@ -103,9 +102,13 @@ class App extends PureComponent {
   }
 
   eventMove = async (event, delta) => {
-    const res = await axios.put(`/v2/event/${event.id}`, { start: this.formatDate(event.start), end: this.formatDate(event.end), day_of_week: event.start.isoWeekday() });
+    const res = await axios.put(`/v2/event/${event.id}`, {
+      start: this.formatDate(event.start),
+      end: this.formatDate(event.end),
+      day_of_week: event.start.isoWeekday()
+    });
     console.log("mooove", res);
-  }
+  };
 
   eventClick(element, event) {
     console.log(element, event);
@@ -123,7 +126,7 @@ class App extends PureComponent {
     let day_of_week = 0;
     event.img = `https://nfoo-server.com/wexerpreview/${
       event.sf_masterid
-      }_${event.navn.substr(0, event.navn.length - 4)}Square.jpg`;
+    }_${event.navn.substr(0, event.navn.length - 4)}Square.jpg`;
     day_of_week = event.start.isoWeekday();
 
     const payload = {
@@ -157,7 +160,6 @@ class App extends PureComponent {
           eventStart.isoWeekday(event.day_of_week);
           const duration = moment(event.end).diff(moment(event.start));
 
-
           eventStart.hours(eventStartMoment.hours());
           eventStart.minutes(eventStartMoment.minutes());
           eventStart.seconds(eventStartMoment.seconds());
@@ -172,9 +174,11 @@ class App extends PureComponent {
             title: event.title,
             day_of_week: event.day_of_week,
             seperation_count: event.seperation_count,
-            img: event.sf_masterid ? `https://nfoo-server.com/wexerpreview/${
-              event.sf_masterid
-              }_${event.navn.substr(0, event.navn.length - 4)}Square.jpg` : 'https://historielaerer.dk/wp-content/plugins/wp-ulike/assets/img/no-thumbnail.png',
+            img: event.sf_masterid
+              ? `https://nfoo-server.com/wexerpreview/${
+                  event.sf_masterid
+                }_${event.navn.substr(0, event.navn.length - 4)}Square.jpg`
+              : "https://historielaerer.dk/wp-content/plugins/wp-ulike/assets/img/no-thumbnail.png",
             duration: event.sf_varighed,
             level: event.sf_level,
             category: event.sf_kategori
@@ -284,6 +288,11 @@ class App extends PureComponent {
     this.setState({ calendars });
   };
 
+  toggleTypeDialog = () => {
+    const { isTypeDialogOpen } = this.state;
+    this.setState({ isTypeDialogOpen: !isTypeDialogOpen });
+  };
+
   toggleDrawerHandler = () => {
     const { isDrawerOpen } = this.state;
     this.setState({ isDrawerOpen: !isDrawerOpen });
@@ -372,22 +381,6 @@ class App extends PureComponent {
                   <MenuItem value="agendaWeek">Week</MenuItem>
                   <MenuItem value="agendaDay">Day</MenuItem>
                 </Select>
-                <Tooltip title="Toggle simple/advanced view">
-                  <IconButton
-                    color="inherit"
-                    onClick={() => this.setState({ isTypeDialogOpen: true })}
-                  >
-                    <Layers />
-                  </IconButton>
-                </Tooltip>
-                <Tooltip title="Publish changes to the Wexer player">
-                  <IconButton
-                    color="secondary"
-                    onClick={() => alert("Published changes!")}
-                  >
-                    <Cloud />
-                  </IconButton>
-                </Tooltip>
               </div>
             </Toolbar>
           </AppBar>
@@ -413,16 +406,21 @@ class App extends PureComponent {
                   <Avatar>
                     <Timer />
                   </Avatar>
-                  <ListItemText primary={moment(`01-01-1991 ${selectedEventDetails.duration}`).format('mm:ss')} />
+                  <ListItemText
+                    primary={moment(
+                      `01-01-1991 ${selectedEventDetails.duration}`
+                    ).format("mm:ss")}
+                  />
                 </ListItem>
                 <ListItem>
                   <Avatar>
-                    {selectedEventDetails.level === 'Beginner' ?
+                    {selectedEventDetails.level === "Beginner" ? (
                       <SignalCellular1Bar />
-                      : selectedEventDetails.level === 'Intermediate' ?
-                        <SignalCellular2Bar /> :
-                        <SignalCellular0Bar />
-                    }
+                    ) : selectedEventDetails.level === "Intermediate" ? (
+                      <SignalCellular2Bar />
+                    ) : (
+                      <SignalCellular0Bar />
+                    )}
                   </Avatar>
                   <ListItemText primary={selectedEventDetails.level} />
                 </ListItem>
@@ -460,6 +458,7 @@ class App extends PureComponent {
         <SettingsDialog
           toggleSettingsMenu={this.toggleSettingsMenu}
           show={isSettingsDialogOpen}
+          toggleTypeDialog={this.toggleTypeDialog}
         />
       </div>
     );
