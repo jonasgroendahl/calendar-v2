@@ -13,6 +13,13 @@
   opacity: 0;
 }
 
+#calendar .fc-title {
+  background: black;
+  width: fit-content;
+  font-family: monospace;
+  font-size: 12px;
+}
+
 /* Hover CSS */
 /*
 #calendar
