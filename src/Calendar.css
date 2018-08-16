@@ -23,6 +23,7 @@
 #calendar .fc-event .fc-time {
   background: cornflowerblue;
   width: fit-content;
+  font-family: monospace;
 }
 
 /* Hover CSS */
