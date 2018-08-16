@@ -68,7 +68,20 @@ export default class LeftDrawer extends PureComponent {
 
   async componentDidMount() {
     const content = await axios.get("/v2/content");
-    this.setState({ content: content.data });
+    const finalContent = [
+      {
+        indslagid: 9999,
+        sf_engelsktitel: "Disable On-Demand",
+        sf_kategori: "",
+        sf_level: "",
+        sf_varighed: "00:30:00",
+        indslagtypeid: 3,
+        navn: "ondemand.mp4",
+        sf_masterid: 9999
+      },
+      ...content.data
+    ];
+    this.setState({ content: finalContent });
   }
 
   componentDidUpdate(_, prevState) {
@@ -159,21 +172,21 @@ export default class LeftDrawer extends PureComponent {
             button
             data-event={`{ "title" : "${
               contentEntry.sf_engelsktitel
-              }", "duration" : "${contentEntry.sf_varighed}", "video_id" : ${
+            }", "duration" : "${contentEntry.sf_varighed}", "video_id" : ${
               contentEntry.indslagid
-              }, "sf_masterid" : ${contentEntry.sf_masterid}, "navn" : "${
+            }, "sf_masterid" : ${contentEntry.sf_masterid}, "navn" : "${
               contentEntry.navn
-              }", 
+            }", 
             "level": "${contentEntry.sf_level}"}`}
             key={contentEntry.indslagid}
           >
             <Avatar
               src={`https://nfoo-server.com/wexerpreview/${
                 contentEntry.sf_masterid
-                }_${contentEntry.navn.substr(
-                  0,
-                  contentEntry.navn.length - 4
-                )}Square.jpg`}
+              }_${contentEntry.navn.substr(
+                0,
+                contentEntry.navn.length - 4
+              )}Square.jpg`}
             />
             <ListItemText>{contentEntry.sf_engelsktitel}</ListItemText>
           </ListItem>
@@ -189,8 +202,7 @@ export default class LeftDrawer extends PureComponent {
       ) {
         localMatches++;
         return null;
-      }
-      else {
+      } else {
         return null;
       }
     });
@@ -199,7 +211,7 @@ export default class LeftDrawer extends PureComponent {
     if (classes && classes.every(cl => cl === null)) {
       classes = (
         <ListItem>
-          <ListItemIcon style={{ animation: '2s ringing infinite' }}>
+          <ListItemIcon style={{ animation: "2s ringing infinite" }}>
             <NotificationsActive />
           </ListItemIcon>
           <ListItemText>No classes found!</ListItemText>
@@ -273,7 +285,10 @@ export default class LeftDrawer extends PureComponent {
                           disableUnderline
                         >
                           {levels.map(level => (
-                            <MenuItem value={level.value} key={`level_${level.text}`}>
+                            <MenuItem
+                              value={level.value}
+                              key={`level_${level.text}`}
+                            >
                               {level.text}
                             </MenuItem>
                           ))}
@@ -291,7 +306,9 @@ export default class LeftDrawer extends PureComponent {
                           disableUnderline
                         >
                           {categories.map(cat => (
-                            <MenuItem value={cat.value} key={`cat_${cat.text}`}>{cat.text}</MenuItem>
+                            <MenuItem value={cat.value} key={`cat_${cat.text}`}>
+                              {cat.text}
+                            </MenuItem>
                           ))}
                         </Select>
                       </FormControl>
@@ -305,8 +322,10 @@ export default class LeftDrawer extends PureComponent {
                     </Grid>
                   </Grid>
                 </CardContent>
-                <CardActions style={{ justifyContent: 'flex-end' }}>
-                  <Button color="primary" onClick={this.toggleFilters}>Cancel</Button>
+                <CardActions style={{ justifyContent: "flex-end" }}>
+                  <Button color="primary" onClick={this.toggleFilters}>
+                    Cancel
+                  </Button>
                 </CardActions>
               </Card>
             </Popover>
@@ -322,7 +341,6 @@ export default class LeftDrawer extends PureComponent {
             <BottomNavigationAction label="Favorites" icon={<Favorite />} />
           </BottomNavigation>
         </List>
-
       </Drawer>
     );
   }

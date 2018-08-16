@@ -149,12 +149,17 @@ class App extends PureComponent {
       .add(Math.abs(event.start.diff(event.end, "seconds")), "seconds")
       .format("HH:mm:ss");
     event.duration = duration;
+    // allow on-demand block to be resized
+    if (event.video_id === 9999) {
+      console.log("On-Demand!");
+      event.durationEditable = true;
+    }
     this.calendar.updateEvent(event);
   };
 
   fetchData = async (start, end, _, callback) => {
     const response = await axios.get("/v2/event");
-
+    console.log("fetchData", response);
     const events = [];
     response.data.result.forEach(event => {
       if (event.day_of_week) {
@@ -186,8 +191,13 @@ class App extends PureComponent {
               : "https://historielaerer.dk/wp-content/plugins/wp-ulike/assets/img/no-thumbnail.png",
             duration: event.sf_varighed,
             level: event.sf_level,
-            category: event.sf_kategori
+            category: event.sf_kategori,
+            video_id: event.video_id
           };
+
+          if (newEvent.video_id === 9999) {
+            newEvent.durationEditable = true;
+          }
 
           if (
             event.exceptions.length === 0 ||
@@ -202,14 +212,6 @@ class App extends PureComponent {
         events.push(event);
       }
     });
-    console.log(events);
-    /*
-    const print = hello_empty.map(h => ({
-      start: h.start.format(),
-      day_of_week: h.day_of_week
-    }));
-    console.table(print);
-    */
     callback(events);
   };
 
