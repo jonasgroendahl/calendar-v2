@@ -19,13 +19,17 @@ import {
   List,
   ListItemText,
   Avatar,
-  Button
+  Button,
+  FormControl,
+  InputLabel,
+  Input,
+  Menu
 } from "@material-ui/core";
 import {
-  Cloud,
   Delete,
   ZoomIn,
-  Event,
+  Power,
+  PowerOff,
   Add,
   ZoomOut,
   Build,
@@ -59,6 +63,7 @@ class App extends PureComponent {
         { name: "Les Mills Schedule", id: 41 },
         { name: "Zumba schedule", id: 42 }
       ],
+      players: [{ name: "Les Mills Player", id: 43, calendar_id: 41 }],
       type: "simple",
       view: "agendaWeek",
       showEventType: 0
@@ -303,6 +308,27 @@ class App extends PureComponent {
     this.setState({ isSettingsDialogOpen: !isSettingsDialogOpen });
   };
 
+  toggleSelectPlayer = event => {
+    this.setState({ selectPlayerEl: event.target });
+  };
+
+  selectPlayer = id => {
+    const { players, selectedCalendar } = this.state;
+    const player = players.find(pl => pl.id === id);
+    player.calendar_id = selectedCalendar;
+    this.setState({ players, selectPlayerEl: null });
+  };
+
+  deselectPlayer = () => {
+    const { players, selectedCalendar } = this.state;
+    const playerIndex = players.findIndex(
+      pl => pl.calendar_id === selectedCalendar
+    );
+    const modifiedPlayerArr = [...players];
+    modifiedPlayerArr[playerIndex].calendar_id = 0;
+    this.setState({ players: modifiedPlayerArr });
+  };
+
   render() {
     const {
       isDrawerOpen,
@@ -315,6 +341,29 @@ class App extends PureComponent {
       selectedCalendar,
       isCalendarDialogOpen
     } = this.state;
+
+    // <Tooltip title="Les Mills Player">
+    const players = this.state.players.filter(
+      player => player.calendar_id === selectedCalendar
+    );
+    let attachedPlayer = null;
+    if (players.length > 0) {
+      attachedPlayer = (
+        <IconButton onClick={this.deselectPlayer}>
+          <Power />
+        </IconButton>
+      );
+    } else {
+      attachedPlayer = (
+        <IconButton onClick={this.toggleSelectPlayer}>
+          <PowerOff />
+        </IconButton>
+      );
+    }
+    let attachedPlayerName =
+      players.length > 0
+        ? `Attached to the following players: ${players[0].name}`
+        : "No player attached";
 
     return (
       <div className="App">
@@ -342,20 +391,40 @@ class App extends PureComponent {
                 </IconButton>
               )}
               <div className="calendar-picker-div">
-                <Tooltip title="Les Mills Player">
-                  <Event style={{ marginRight: 10 }} />
+                <Tooltip title={attachedPlayerName}>
+                  <div style={{ marginRight: 5 }}>{attachedPlayer}</div>
                 </Tooltip>
-                <Select
-                  disableUnderline
-                  value={selectedCalendar}
-                  onChange={this.changeCalendarHandler}
+                <Menu
+                  anchorEl={this.state.selectPlayerEl}
+                  open={Boolean(this.state.selectPlayerEl)}
+                  onClose={this.toggleSelectPlayer}
                 >
-                  {this.state.calendars.map(calendar => (
-                    <MenuItem value={calendar.id} key={`calend${calendar.id}`}>
-                      {calendar.name}
+                  {this.state.players.map(player => (
+                    <MenuItem onClick={() => this.selectPlayer(player.id)}>
+                      {player.name}
                     </MenuItem>
                   ))}
-                </Select>
+                </Menu>
+                <FormControl>
+                  <InputLabel htmlFor="calendar-picker">
+                    Choose a calendar
+                  </InputLabel>
+                  <Select
+                    disableUnderline
+                    value={selectedCalendar}
+                    onChange={this.changeCalendarHandler}
+                    input={<Input name="calendar" id="calendar-picker" />}
+                  >
+                    {this.state.calendars.map(calendar => (
+                      <MenuItem
+                        value={calendar.id}
+                        key={`calend${calendar.id}`}
+                      >
+                        {calendar.name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
                 <IconButton onClick={this.toggleCalendarDialog}>
                   <Add />
                 </IconButton>
