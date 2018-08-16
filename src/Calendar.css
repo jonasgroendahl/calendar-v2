@@ -20,6 +20,11 @@
   font-size: 12px;
 }
 
+#calendar .fc-event .fc-time {
+  background: cornflowerblue;
+  width: fit-content;
+}
+
 /* Hover CSS */
 /*
 #calendar
