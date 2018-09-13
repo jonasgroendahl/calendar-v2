@@ -33,6 +33,7 @@ import {
   NotificationsActive,
   Clear
 } from "@material-ui/icons";
+import ListIcon from "@material-ui/icons/List";
 import axios from "./../../axios";
 import dragula from "fullcalendar/dist/dragula.min.js";
 
@@ -63,11 +64,16 @@ export default class LeftDrawer extends PureComponent {
       { value: "Strong and firm(Conditioning)", text: "Conditioning" }
     ],
     isShowingFilters: false,
-    showEventType: 0
+    showEventType: 0,
+    replacing: {
+      from: null,
+      to: null
+    }
   };
 
   async componentDidMount() {
     const content = await axios.get("/v2/content");
+    /*
     const finalContent = [
       {
         indslagid: 9999,
@@ -81,7 +87,8 @@ export default class LeftDrawer extends PureComponent {
       },
       ...content.data
     ];
-    this.setState({ content: finalContent });
+    */
+    this.setState({ content: content.data });
   }
 
   componentDidUpdate(_, prevState) {
@@ -139,6 +146,39 @@ export default class LeftDrawer extends PureComponent {
     this.setState({ filters });
   };
 
+  handleClick = (index) => {
+    if (this.props.isReplacing) {
+      const replacing = { ...this.state.replacing };
+      const content = [...this.state.content];
+      const entry = content[index];
+      if (!replacing.from && entry !== this.state.replacing.to) {
+        replacing.from = entry;
+      }
+      else if (this.state.replacing.from === entry) {
+        console.log("same item");
+        replacing.from = null;
+      }
+      else if (!this.state.replacing.to && entry !== this.state.replacing.from) {
+        replacing.to = entry;
+      }
+      else if (this.state.replacing.to === entry) {
+        replacing.to = null;
+      }
+      this.setState({ replacing }, () => {
+        if (this.state.replacing.to && this.state.replacing.from) {
+          this.props.replace(this.state.replacing.from.indslagid, this.state.replacing.to);
+          setTimeout(() => {
+            const replacing = { ...this.state.replacing };
+            replacing.to = null;
+            replacing.from = null;
+            this.props.toggleIsReplacing();
+            this.setState({ replacing });
+          }, 400);
+        }
+      });
+    }
+  }
+
   render() {
     const {
       search,
@@ -149,12 +189,13 @@ export default class LeftDrawer extends PureComponent {
       content,
       isShowingFilters,
       categories,
-      showEventType
+      showEventType,
+      replacing
     } = this.state;
 
     let localMatches = 0;
     let classes = [];
-    classes = content.map(contentEntry => {
+    classes = content.map((contentEntry, contIndex) => {
       if (
         contentEntry.sf_engelsktitel
           .toLowerCase()
@@ -172,23 +213,24 @@ export default class LeftDrawer extends PureComponent {
             button
             data-event={`{ "title" : "${
               contentEntry.sf_engelsktitel
-            }", "duration" : "${contentEntry.sf_varighed}", "video_id" : ${
+              }", "duration" : "${contentEntry.sf_varighed}", "video_id" : ${
               contentEntry.indslagid
-            }, "sf_masterid" : ${contentEntry.sf_masterid}, "navn" : "${
+              }, "sf_masterid" : ${contentEntry.sf_masterid}, "navn" : "${
               contentEntry.navn
-            }", 
+              }", 
             "level": "${contentEntry.sf_level}"}`}
             key={contentEntry.indslagid}
+            onClick={() => this.handleClick(contIndex)}
           >
             <Avatar
               src={`https://nfoo-server.com/wexerpreview/${
                 contentEntry.sf_masterid
-              }_${contentEntry.navn.substr(
-                0,
-                contentEntry.navn.length - 4
-              )}Square.jpg`}
+                }_${contentEntry.navn.substr(
+                  0,
+                  contentEntry.navn.length - 4
+                )}Square.jpg`}
             />
-            <ListItemText>{contentEntry.sf_engelsktitel}</ListItemText>
+            <ListItemText secondary={contentEntry === replacing.from ? 'Replacing from...' : contentEntry === replacing.to ? 'Replacing to' : ''}>{contentEntry.sf_engelsktitel}</ListItemText>
           </ListItem>
         );
       } else if (
@@ -269,7 +311,6 @@ export default class LeftDrawer extends PureComponent {
               <FilterList />
             </IconButton>
             {filterText}
-            <Avatar />
             <Popover open={isShowingFilters} onClose={this.toggleFilters}>
               <Card>
                 <CardContent>
@@ -329,6 +370,9 @@ export default class LeftDrawer extends PureComponent {
                 </CardActions>
               </Card>
             </Popover>
+            {/*<IconButton>
+              <ListIcon />
+            </IconButton>*/}
           </ListItem>
           <div className="test">{classes}</div>
           <BottomNavigation

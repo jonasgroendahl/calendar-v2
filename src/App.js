@@ -37,13 +37,17 @@ import {
   SignalCellular2Bar,
   SignalCellular0Bar,
   Timer,
-  Title
+  Title,
+  Redo,
+  Undo,
+  MoreVert
 } from "@material-ui/icons";
 import IconMenu from "@material-ui/icons/Menu";
 import SelectTypeDialog from "./components/SelectTypeDialog/SelectTypeDialog";
 import CalendarDialog from "./components/CalendarDialog/CalendarDialog";
 import LeftDrawer from "./components/LeftDrawer/LeftDrawer";
 import SettingsDialog from "./components/SettingsDialog/SettingsDialog";
+import ActionDialog from "./components/ActionDialog/ActionDialog";
 
 class App extends PureComponent {
   constructor(props) {
@@ -51,11 +55,14 @@ class App extends PureComponent {
     this.refCalendar = React.createRef();
     this.calendar = null;
     this.zoom = 2;
+    this.actions = [];
     this.state = {
       isDrawerOpen: true,
       isTypeDialogOpen: false,
       isCalendarDialogOpen: false,
       isSettingsDialogOpen: false,
+      isActionDialogOpen: false,
+      isReplacing: false,
       selectedEvent: null,
       selectedEventDetails: { duration: "", level: "", category: "" },
       selectedCalendar: 41,
@@ -66,7 +73,8 @@ class App extends PureComponent {
       players: [{ name: "Les Mills Player", id: 43, calendar_id: 41 }],
       type: "simple",
       view: "agendaWeek",
-      showEventType: 0
+      showEventType: 0,
+      aIndex: 0
     };
   }
 
@@ -88,14 +96,14 @@ class App extends PureComponent {
       snapDuration: "00:01:00",
       height: "parent",
       droppable: true,
-      viewChange: function() {
+      viewChange: function () {
         this.calendar.rerenderEvents();
       },
       eventReceive: this.eventReceive,
-      eventClick: function(event) {
+      eventClick: function (event) {
         self.eventClick(this, event);
       },
-      eventResize: function() {
+      eventResize: function () {
         self.setState({ selectedEvent: null });
       },
       eventRender: this.eventRender,
@@ -112,6 +120,9 @@ class App extends PureComponent {
       end: this.formatDate(event.end),
       day_of_week: event.start.isoWeekday()
     });
+    this.actions.push(this.calendar.clientEvents());
+    const { aIndex } = this.state;
+    this.setState({ aIndex: aIndex + 1 });
     console.log("mooove", res);
   };
 
@@ -131,7 +142,7 @@ class App extends PureComponent {
     let day_of_week = 0;
     event.img = `https://nfoo-server.com/wexerpreview/${
       event.sf_masterid
-    }_${event.navn.substr(0, event.navn.length - 4)}Square.jpg`;
+      }_${event.navn.substr(0, event.navn.length - 4)}Square.jpg`;
     day_of_week = event.start.isoWeekday();
 
     const payload = {
@@ -155,6 +166,7 @@ class App extends PureComponent {
       event.durationEditable = true;
     }
     this.calendar.updateEvent(event);
+    this.addCurrentEventsToActions();
   };
 
   fetchData = async (start, end, _, callback) => {
@@ -186,8 +198,8 @@ class App extends PureComponent {
             seperation_count: event.seperation_count,
             img: event.sf_masterid
               ? `https://nfoo-server.com/wexerpreview/${
-                  event.sf_masterid
-                }_${event.navn.substr(0, event.navn.length - 4)}Square.jpg`
+              event.sf_masterid
+              }_${event.navn.substr(0, event.navn.length - 4)}Square.jpg`
               : "https://historielaerer.dk/wp-content/plugins/wp-ulike/assets/img/no-thumbnail.png",
             duration: event.sf_varighed,
             level: event.sf_level,
@@ -213,6 +225,7 @@ class App extends PureComponent {
       }
     });
     callback(events);
+    this.actions.push(this.calendar.clientEvents());
   };
 
   formatDate = moment => {
@@ -244,6 +257,7 @@ class App extends PureComponent {
     axios.delete(`/v2/event/${this.state.selectedEventDetails.id}`);
     this.calendar.removeEvents(this.state.selectedEventDetails._id);
     this.setState({ selectedEvent: null });
+    this.addCurrentEventsToActions();
   };
 
   viewChangeHandler = event => {
@@ -314,6 +328,10 @@ class App extends PureComponent {
     this.setState({ selectPlayerEl: event.target });
   };
 
+  toggleActionDialog = () => {
+    this.setState({ isActionDialogOpen: !this.state.isActionDialogOpen });
+  };
+
   selectPlayer = id => {
     const { players, selectedCalendar } = this.state;
     const player = players.find(pl => pl.id === id);
@@ -331,6 +349,74 @@ class App extends PureComponent {
     this.setState({ players: modifiedPlayerArr });
   };
 
+  copyHandler = () => {
+
+  }
+
+  redoHandler = () => {
+    const { aIndex } = this.state;
+    this.calendar.removeEvents();
+    this.setState({ aIndex: aIndex + 1 }, () => this.calendar.addEventSource(this.actions[this.state.aIndex]));
+  }
+
+  undoHandler = () => {
+    const { aIndex } = this.state;
+    console.log(aIndex);
+    console.log(this.actions);
+    this.calendar.removeEvents();
+    this.setState({ aIndex: aIndex - 1 }, () => this.calendar.addEventSource(this.actions[this.state.aIndex]));
+  }
+
+  addCurrentEventsToActions = () => {
+    const events = this.calendar.clientEvents();
+    this.actions.push(events);
+    this.setState({ aIndex: this.actions.length - 1 });
+  }
+
+  deleteAllHandler = () => {
+    const { aIndex } = this.state;
+    this.calendar.removeEvents();
+    this.actions.push([]);
+    this.setState({ aIndex: this.actions.length - 1 });
+  }
+
+  copyOneDayHandler = (start, end) => {
+    this.calendar.removeEvents(event => event.day_of_week == end);
+    const events = this.calendar.clientEvents((event) => event.day_of_week == start);
+    const eventsMapped = events.map(event => {
+      const e = { ...event };
+      e.start = e.start.isoWeekday(end);
+      e.end = e.end.isoWeekday(end);
+      return e;
+    });
+    this.calendar.addEventSource(eventsMapped);
+    this.addCurrentEventsToActions();
+  }
+
+  toggleIsReplacing = () => {
+    this.setState({ isReplacing: !this.state.isReplacing, isActionDialogOpen: false });
+  }
+
+  replaceClassHandler = (fromId, eventTo) => {
+    const events = this.calendar.clientEvents((event) => event.video_id == fromId);
+    const eventsMapped = events.map(event => {
+      const e = { ...event };
+      e.category = eventTo.sf_kategori;
+      e.title = eventTo.sf_engelsktitel;
+      e.img = `https://nfoo-server.com/wexerpreview/${
+        eventTo.sf_masterid
+        }_${eventTo.navn.substr(
+          0,
+          eventTo.navn.length - 4
+        )}Square.jpg`;
+      return e;
+    });
+    this.calendar.updateEvents(eventsMapped);
+    this.addCurrentEventsToActions();
+  }
+
+
+
   render() {
     const {
       isDrawerOpen,
@@ -341,7 +427,9 @@ class App extends PureComponent {
       type,
       view,
       selectedCalendar,
-      isCalendarDialogOpen
+      isCalendarDialogOpen,
+      isActionDialogOpen,
+      isReplacing
     } = this.state;
 
     // <Tooltip title="Les Mills Player">
@@ -372,6 +460,9 @@ class App extends PureComponent {
         <LeftDrawer
           toggleDrawerHandler={this.toggleDrawerHandler}
           show={isDrawerOpen}
+          isReplacing={isReplacing}
+          replace={this.replaceClassHandler}
+          toggleIsReplacing={this.toggleIsReplacing}
         />
         <div
           className="calendar-container"
@@ -393,42 +484,17 @@ class App extends PureComponent {
                 </IconButton>
               )}
               <div className="calendar-picker-div">
-                <Tooltip title={attachedPlayerName}>
-                  <div style={{ marginRight: 5 }}>{attachedPlayer}</div>
-                </Tooltip>
-                <Menu
-                  anchorEl={this.state.selectPlayerEl}
-                  open={Boolean(this.state.selectPlayerEl)}
-                  onClose={this.toggleSelectPlayer}
-                >
-                  {this.state.players.map(player => (
-                    <MenuItem onClick={() => this.selectPlayer(player.id)}>
-                      {player.name}
-                    </MenuItem>
-                  ))}
-                </Menu>
-                <FormControl>
-                  <InputLabel htmlFor="calendar-picker">
-                    Choose a calendar
-                  </InputLabel>
-                  <Select
-                    disableUnderline
-                    value={selectedCalendar}
-                    onChange={this.changeCalendarHandler}
-                    input={<Input name="calendar" id="calendar-picker" />}
-                  >
-                    {this.state.calendars.map(calendar => (
-                      <MenuItem
-                        value={calendar.id}
-                        key={`calend${calendar.id}`}
-                      >
-                        {calendar.name}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
                 <IconButton onClick={this.toggleCalendarDialog}>
                   <Add />
+                </IconButton>
+                <IconButton onClick={this.undoHandler} disabled={this.state.aIndex === 0}>
+                  <Undo />
+                </IconButton>
+                <IconButton onClick={this.redoHandler} disabled={this.actions.length === 0 || this.state.aIndex === this.actions.length - 1}>
+                  <Redo />
+                </IconButton>
+                <IconButton onClick={this.toggleActionDialog}>
+                  <MoreVert />
                 </IconButton>
               </div>
               <div style={{ marginLeft: "auto" }}>
@@ -443,7 +509,7 @@ class App extends PureComponent {
                 <IconButton onClick={() => this.zoomHandler("out")}>
                   <ZoomOut />
                 </IconButton>
-                <Select
+                {false ? <Select
                   value={view}
                   onChange={this.viewChangeHandler}
                   disableUnderline
@@ -451,7 +517,8 @@ class App extends PureComponent {
                 >
                   <MenuItem value="agendaWeek">Week</MenuItem>
                   <MenuItem value="agendaDay">Day</MenuItem>
-                </Select>
+                </Select> : null
+                }
               </div>
             </Toolbar>
           </AppBar>
@@ -490,8 +557,8 @@ class App extends PureComponent {
                     ) : selectedEventDetails.level === "Intermediate" ? (
                       <SignalCellular2Bar />
                     ) : (
-                      <SignalCellular0Bar />
-                    )}
+                          <SignalCellular0Bar />
+                        )}
                   </Avatar>
                   <ListItemText primary={selectedEventDetails.level} />
                 </ListItem>
@@ -530,6 +597,13 @@ class App extends PureComponent {
           toggleSettingsMenu={this.toggleSettingsMenu}
           show={isSettingsDialogOpen}
           toggleTypeDialog={this.toggleTypeDialog}
+        />
+        <ActionDialog
+          show={isActionDialogOpen}
+          toggle={this.toggleActionDialog}
+          delete={this.deleteAllHandler}
+          copy={this.copyOneDayHandler}
+          replace={this.toggleIsReplacing}
         />
       </div>
     );
