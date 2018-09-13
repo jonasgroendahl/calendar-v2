@@ -23,7 +23,7 @@ export default class ActionDialog extends PureComponent {
     }
 
     handleChange = (event) => {
-        const { copyOneDay } = this.state;
+        const copyOneDay = { ...this.state.copyOneDay };
         copyOneDay[event.target.name] = event.target.value;
         this.setState({ copyOneDay });
     };
@@ -43,10 +43,10 @@ export default class ActionDialog extends PureComponent {
                                 </ListItem>
                             </Grid>
                             <Grid item xs={4}>
-                                <Select value={this.state.copyOneDay.start} onChange={this.handleChange} name="start" style={{ marginRight: 5 }}>
+                                <Select value={this.state.copyOneDay.start} onChange={this.handleChange} name="start" fullWidth>
                                     {this.state.days.map(day => <MenuItem value={day.value}>{day.text}</MenuItem>)}
                                 </Select>
-                                <Select value={this.state.copyOneDay.end} onChange={this.handleChange} name="end">
+                                <Select value={this.state.copyOneDay.end} onChange={this.handleChange} name="end" fullWidth style={{ marginTop: 5 }}>
                                     {this.state.days.map(day => <MenuItem value={day.value}>{day.text}</MenuItem>)}
                                 </Select>
                             </Grid>
