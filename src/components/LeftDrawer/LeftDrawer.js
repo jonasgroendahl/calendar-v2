@@ -21,7 +21,9 @@ import {
   ListItemIcon,
   Tooltip,
   Button,
-  CardActions
+  CardActions,
+  Popper,
+  ClickAwayListener
 } from "@material-ui/core";
 import {
   Search,
@@ -31,9 +33,10 @@ import {
   Favorite,
   FilterList,
   NotificationsActive,
-  Clear
+  Clear,
+  Event,
+  Add
 } from "@material-ui/icons";
-import ListIcon from "@material-ui/icons/List";
 import axios from "./../../axios";
 import dragula from "fullcalendar/dist/dragula.min.js";
 
@@ -68,7 +71,8 @@ export default class LeftDrawer extends PureComponent {
     replacing: {
       from: null,
       to: null
-    }
+    },
+    anchorElCalendar: null
   };
 
   async componentDidMount() {
@@ -179,6 +183,29 @@ export default class LeftDrawer extends PureComponent {
     }
   }
 
+  addCalendar = () => {
+    this.setState({ anchorElCalendar: null });
+    this.props.toggleCalendarDialog();
+  }
+
+  toggleCalendarPopper = event => {
+    console.log("toggleCalendarPopper", event);
+    if (!this.state.anchorElCalendar) {
+      this.setState({ anchorElCalendar: event.currentTarget });
+    }
+    else {
+      this.setState({ anchorElCalendar: null });
+    }
+  }
+
+  onClickAway = event => {
+    console.log((event.target !== document.querySelector("#button path")));
+    if (event.target.toString() !== document.querySelector("#button path").toString()) {
+      this.setState({ anchorElCalendar: null });
+    }
+  }
+
+
   render() {
     const {
       search,
@@ -190,7 +217,8 @@ export default class LeftDrawer extends PureComponent {
       isShowingFilters,
       categories,
       showEventType,
-      replacing
+      replacing,
+      anchorElCalendar
     } = this.state;
 
     let localMatches = 0;
@@ -283,7 +311,43 @@ export default class LeftDrawer extends PureComponent {
         open={this.props.show}
         PaperProps={{ style: { width: 290 } }}
       >
-        <div>
+        <div className="flex center">
+          <Tooltip title={this.props.calendars.find(cl => cl.id === this.props.selectedCalendar).name}>
+            <IconButton onClick={this.toggleCalendarPopper} id="button">
+              <Event />
+            </IconButton>
+          </Tooltip>
+          <Popper open={Boolean(anchorElCalendar)} anchorEl={anchorElCalendar} style={{ zIndex: 9999 }}>
+            <ClickAwayListener onClickAway={this.onClickAway}>
+              <Card elevation={5}>
+                <List>
+                  <ListItem>
+                    <Avatar>
+                      <Event />
+                    </Avatar>
+                    <ListItemText secondary={`ID: ${this.props.selectedCalendar}`}>
+                      {this.props.calendars.find(cl => cl.id === this.props.selectedCalendar).name}
+                    </ListItemText>
+                  </ListItem>
+                  <Divider />
+                  {
+                    this.props.calendars.map(calendar => calendar.id !== this.props.selectedCalendar &&
+                      <ListItem button onClick={() => this.props.changeCalendarHandler(calendar.id)}>
+                        <ListItemText secondary={`ID: ${calendar.id}`}>
+                          {calendar.name}
+                        </ListItemText>
+                      </ListItem>
+                    )}
+                  <Divider />
+                  <CardActions>
+                    <Button variant="outlined" color="secondary" onClick={this.addCalendar}>
+                      New <Add style={{ marginLeft: 5 }} />
+                    </Button>
+                  </CardActions>
+                </List>
+              </Card>
+            </ClickAwayListener>
+          </Popper>
           <IconButton onClick={this.props.toggleDrawerHandler}>
             <ChevronRight />
           </IconButton>

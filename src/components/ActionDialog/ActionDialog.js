@@ -44,10 +44,10 @@ export default class ActionDialog extends PureComponent {
                             </Grid>
                             <Grid item xs={4}>
                                 <Select value={this.state.copyOneDay.start} onChange={this.handleChange} name="start" fullWidth>
-                                    {this.state.days.map(day => <MenuItem value={day.value}>{day.text}</MenuItem>)}
+                                    {this.state.days.map(day => <MenuItem value={day.value} key={`start_${day.value}`}>{day.text}</MenuItem>)}
                                 </Select>
                                 <Select value={this.state.copyOneDay.end} onChange={this.handleChange} name="end" fullWidth style={{ marginTop: 5 }}>
-                                    {this.state.days.map(day => <MenuItem value={day.value}>{day.text}</MenuItem>)}
+                                    {this.state.days.map(day => <MenuItem value={day.value} key={`end_${day.value}`}>{day.text}</MenuItem>)}
                                 </Select>
                             </Grid>
                         </Grid>
@@ -55,7 +55,7 @@ export default class ActionDialog extends PureComponent {
                             <ListItemText secondary="This will activate selection mode, select 2 classes in the menu to the left.">Replace all instances of 1 class.</ListItemText>
                         </ListItem>
                         <ListItem button onClick={this.props.delete}>
-                            <ListItemText secondary="This will delete all entries in the calendar">Clear calendar.</ListItemText>
+                            <ListItemText secondary="This will delete all entries in the calendar.">Clear calendar.</ListItemText>
                         </ListItem>
                     </List>
                 </DialogContent>
