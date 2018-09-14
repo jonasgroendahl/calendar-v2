@@ -258,7 +258,7 @@ export default class LeftDrawer extends PureComponent {
                   contentEntry.navn.length - 4
                 )}Square.jpg`}
             />
-            <ListItemText secondary={contentEntry === replacing.from ? 'Replacing from...' : contentEntry === replacing.to ? 'Replacing to' : ''}>{contentEntry.sf_engelsktitel}</ListItemText>
+            <ListItemText secondary={contentEntry === replacing.from ? 'Select a class to replace this one ...' : contentEntry === replacing.to ? 'Replacing with this class ...' : ''}>{contentEntry.sf_engelsktitel}</ListItemText>
           </ListItem>
         );
       } else if (
