@@ -139,6 +139,7 @@ class App extends PureComponent {
             event.sf_masterid
             }_${event.navn.substr(0, event.navn.length - 4)}Square.jpg`;
         day_of_week = event.start.isoWeekday();
+        event.day_of_week = day_of_week;
 
         const payload = {
             start: this.formatDate(event.start),
@@ -376,6 +377,7 @@ class App extends PureComponent {
 
     copyOneDayHandler = (start, end) => {
         this.calendar.removeEvents(event => event.day_of_week === end);
+        console.log(this.calendar.clientEvents());
         const events = this.calendar.clientEvents((event) => event.day_of_week === start);
         const eventsMapped = events.map(event => {
             const e = { ...event };
