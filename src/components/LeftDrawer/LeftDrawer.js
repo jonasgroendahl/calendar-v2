@@ -35,7 +35,9 @@ import {
   NotificationsActive,
   Clear,
   Event,
-  Add
+  Add,
+  Receipt,
+  KeyboardBackspace
 } from "@material-ui/icons";
 import axios from "./../../axios";
 import dragula from "fullcalendar/dist/dragula.min.js";
@@ -72,7 +74,13 @@ export default class LeftDrawer extends PureComponent {
       from: null,
       to: null
     },
-    anchorElCalendar: null
+    anchorElCalendar: null,
+    view: 'CLASS_OVERVIEW',
+    rule: {
+      start: '',
+      end: '',
+      day: 1
+    }
   };
 
   async componentDidMount() {
@@ -205,6 +213,20 @@ export default class LeftDrawer extends PureComponent {
     }
   }
 
+  handleViewChange = () => {
+    if (this.state.view == 'CLASS_OVERVIEW') {
+      this.setState({ view: 'KEYS' });
+    }
+    else {
+      this.setState({ view: 'CLASS_OVERVIEW' });
+    }
+  }
+
+  handleRuleChange = (event) => {
+    const rule = { ...this.state.rule };
+    rule[event.target.name] = event.target.value;
+    this.setState({ rule });
+  }
 
   render() {
     const {
@@ -218,75 +240,103 @@ export default class LeftDrawer extends PureComponent {
       categories,
       showEventType,
       replacing,
-      anchorElCalendar
+      anchorElCalendar,
+      view,
+      rule
     } = this.state;
 
     let localMatches = 0;
     let classes = [];
-    classes = content.map((contentEntry, contIndex) => {
-      if (
-        contentEntry.sf_engelsktitel
-          .toLowerCase()
-          .includes(search.toLowerCase()) &&
-        contentEntry.indslagtypeid === eventType &&
-        (contentEntry.sf_level === filters.level || filters.level === "None") &&
-        (contentEntry.sf_kategori === filters.category ||
-          filters.category === "None") &&
-        localMatches < matches
-      ) {
-        localMatches++;
-        return (
-          <ListItem
-            className="event"
-            button
-            data-event={`{ "title" : "${
-              contentEntry.sf_engelsktitel
-              }", "duration" : "${contentEntry.sf_varighed}", "video_id" : ${
-              contentEntry.indslagid
-              }, "sf_masterid" : ${contentEntry.sf_masterid}, "navn" : "${
-              contentEntry.navn
-              }", 
+    if (view == 'CLASS_OVERVIEW') {
+      classes = content.map((contentEntry, contIndex) => {
+        if (
+          contentEntry.sf_engelsktitel
+            .toLowerCase()
+            .includes(search.toLowerCase()) &&
+          contentEntry.indslagtypeid === eventType &&
+          (contentEntry.sf_level === filters.level || filters.level === "None") &&
+          (contentEntry.sf_kategori === filters.category ||
+            filters.category === "None") &&
+          localMatches < matches
+        ) {
+          localMatches++;
+          return (
+            <ListItem
+              className="event"
+              button
+              data-event={`{ "title" : "${
+                contentEntry.sf_engelsktitel
+                }", "duration" : "${contentEntry.sf_varighed}", "video_id" : ${
+                contentEntry.indslagid
+                }, "sf_masterid" : ${contentEntry.sf_masterid}, "navn" : "${
+                contentEntry.navn
+                }", 
             "level": "${contentEntry.sf_level}"}`}
-            key={contentEntry.indslagid}
-            onClick={() => this.handleClick(contIndex)}
-          >
-            <Avatar
-              src={`https://nfoo-server.com/wexerpreview/${
-                contentEntry.sf_masterid
-                }_${contentEntry.navn.substr(
-                  0,
-                  contentEntry.navn.length - 4
-                )}Square.jpg`}
-            />
-            <ListItemText secondary={contentEntry === replacing.from ? 'Select a class to replace this one ...' : contentEntry === replacing.to ? 'Replacing with this class ...' : ''}>{contentEntry.sf_engelsktitel}</ListItemText>
+              key={contentEntry.indslagid}
+              onClick={() => this.handleClick(contIndex)}
+            >
+              <Avatar
+                src={`https://nfoo-server.com/wexerpreview/${
+                  contentEntry.sf_masterid
+                  }_${contentEntry.navn.substr(
+                    0,
+                    contentEntry.navn.length - 4
+                  )}Square.jpg`}
+              />
+              <ListItemText secondary={contentEntry === replacing.from ? 'Select a class to replace this one ...' : contentEntry === replacing.to ? 'Replacing with this class ...' : ''}>{contentEntry.sf_engelsktitel}</ListItemText>
+            </ListItem>
+          );
+        } else if (
+          contentEntry.sf_engelsktitel
+            .toLowerCase()
+            .includes(search.toLowerCase()) &&
+          contentEntry.indslagtypeid === eventType &&
+          (contentEntry.sf_level === filters.level || filters.level === "None") &&
+          (contentEntry.sf_kategori === filters.category ||
+            filters.category === "None")
+        ) {
+          localMatches++;
+          return null;
+        } else {
+          return null;
+        }
+      });
+      // if no matches
+
+      if (classes && classes.every(cl => cl === null)) {
+        classes = (
+          <ListItem>
+            <ListItemIcon style={{ animation: "2s ringing infinite" }}>
+              <NotificationsActive />
+            </ListItemIcon>
+            <ListItemText>No classes found!</ListItemText>
           </ListItem>
         );
-      } else if (
-        contentEntry.sf_engelsktitel
-          .toLowerCase()
-          .includes(search.toLowerCase()) &&
-        contentEntry.indslagtypeid === eventType &&
-        (contentEntry.sf_level === filters.level || filters.level === "None") &&
-        (contentEntry.sf_kategori === filters.category ||
-          filters.category === "None")
-      ) {
-        localMatches++;
-        return null;
-      } else {
-        return null;
       }
-    });
-    // if no matches
-
-    if (classes && classes.every(cl => cl === null)) {
-      classes = (
+    }
+    else {
+      classes =
         <ListItem>
-          <ListItemIcon style={{ animation: "2s ringing infinite" }}>
-            <NotificationsActive />
-          </ListItemIcon>
-          <ListItemText>No classes found!</ListItemText>
+          <div className="flex column">
+            <ListItemText><strong>Rule:</strong> Disable On Demand</ListItemText>
+            <Grid container alignItems="center">
+              <Grid item xs={3}>
+                <span>Date</span>
+              </Grid>
+              <Grid item xs={9} style={{ display: 'flex', alignItems: 'center' }}>
+                <Select value={rule.day} disableUnderline onChange={this.handleRuleChange} name="day">
+                  <MenuItem value={1}>Monday</MenuItem>
+                </Select>
+                <div>
+                  <input type="time" value={rule.start} name="start" onChange={this.handleRuleChange} />
+                  <input type="time" value={rule.end} name="end" onChange={this.handleRuleChange} />
+                </div>
+              </Grid>
+            </Grid>
+            <Divider style={{ marginTop: 10 }} />
+            <Button color="primary" onClick={() => this.props.addRule(rule.day, rule.start, rule.end)}>Add rule</Button>
+          </div>
         </ListItem>
-      );
     }
 
     // filterText
@@ -371,9 +421,11 @@ export default class LeftDrawer extends PureComponent {
             </Grid>
           </ListItem>
           <ListItem>
-            <IconButton onClick={this.toggleFilters}>
-              <FilterList />
-            </IconButton>
+            <Tooltip title="Apply filters">
+              <IconButton onClick={this.toggleFilters}>
+                <FilterList />
+              </IconButton>
+            </Tooltip>
             {filterText}
             <Popover open={isShowingFilters} onClose={this.toggleFilters}>
               <Card>
@@ -434,9 +486,9 @@ export default class LeftDrawer extends PureComponent {
                 </CardActions>
               </Card>
             </Popover>
-            {/*<IconButton>
-              <ListIcon />
-            </IconButton>*/}
+            <IconButton onClick={this.handleViewChange}>
+              {view === 'CLASS_OVERVIEW' ? <Receipt /> : <KeyboardBackspace />}
+            </IconButton>
           </ListItem>
           <div className="test">{classes}</div>
           <BottomNavigation

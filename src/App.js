@@ -35,7 +35,8 @@ import {
     Redo,
     Undo,
     MoreVert,
-    Close
+    Close,
+    Receipt
 } from "@material-ui/icons";
 import IconMenu from "@material-ui/icons/Menu";
 import SelectTypeDialog from "./components/SelectTypeDialog/SelectTypeDialog";
@@ -43,6 +44,7 @@ import CalendarDialog from "./components/CalendarDialog/CalendarDialog";
 import LeftDrawer from "./components/LeftDrawer/LeftDrawer";
 import SettingsDialog from "./components/SettingsDialog/SettingsDialog";
 import ActionDialog from "./components/ActionDialog/ActionDialog";
+import LoadingModal from "./components/Loading/Loading";
 
 class App extends PureComponent {
     constructor(props) {
@@ -69,15 +71,26 @@ class App extends PureComponent {
             type: "simple",
             view: "agendaWeek",
             showEventType: 0,
-            aIndex: 0
+            aIndex: 0,
+            loading: false
         };
     }
 
     async componentDidMount() {
+        this.createCalendar();
+    }
+
+    createCalendar = () => {
+        console.log("createCalendar");
+        if (this.calendar) {
+            console.log("destroying existing calendar");
+            this.calendar.destroy();
+            this.actions.splice(0, this.actions.length);
+        }
+        this.setState({ loading: true });
         const self = this;
         this.options = {
-            events: (start, end, _, callback) =>
-                this.fetchData(start, end, _, callback),
+            events: this.fetchData,
             defaultView: "agendaWeek",
             allDaySlot: false,
             eventDurationEditable: false,
@@ -91,20 +104,24 @@ class App extends PureComponent {
             snapDuration: "00:01:00",
             height: "parent",
             droppable: true,
-            viewChange: function() {
+            viewChange: function () {
                 this.calendar.rerenderEvents();
             },
             eventReceive: this.eventReceive,
-            eventClick: function(event) {
+            eventClick: function (event) {
                 self.eventClick(this, event);
             },
-            eventResize: function() {
+            eventResize: function () {
                 self.setState({ selectedEvent: null });
             },
             eventRender: this.eventRender,
-            eventDrop: this.eventMove
+            eventDrop: this.eventMove,
+            dayClick: this.dayClick,
+            selectOverlap: function (event) {
+                console.log("sup");
+                return true;
+            }
         };
-        this.options.eventClick.bind(this);
         this.calendar = new Calendar(this.refCalendar.current, this.options);
         this.calendar.render();
     }
@@ -121,15 +138,27 @@ class App extends PureComponent {
         console.log("mooove", res);
     };
 
+    dayClick = (event) => {
+        console.log(event);
+    }
+
     eventClick(element, event) {
         console.log(element, event);
         this.setState({ selectedEvent: element, selectedEventDetails: event });
     }
 
     eventRender = (event, element) => {
-        element.style.backgroundImage = `url(${event.img})`;
-        element.style.backgroundSize = `cover`;
-        element.style.backgroundRepeat = `no-repeat`;
+        console.log("eventRendering");
+        if (event.video_id === 9999) {
+            console.log("On demand found!");
+        }
+        else if (event.video_id === 42815) {
+        }
+        else {
+            element.style.backgroundImage = `url(${event.img})`;
+            element.style.backgroundSize = `cover`;
+            element.style.backgroundRepeat = `no-repeat`;
+        }
     };
 
     eventReceive = async event => {
@@ -200,7 +229,8 @@ class App extends PureComponent {
                         duration: event.sf_varighed,
                         level: event.sf_level,
                         category: event.sf_kategori,
-                        video_id: event.video_id
+                        video_id: event.video_id,
+                        rendering: event.video_id === 42815 ? 'background' : ''
                     };
 
                     if (newEvent.video_id === 9999) {
@@ -222,6 +252,7 @@ class App extends PureComponent {
         });
         callback(events);
         this.actions.push(this.calendar.clientEvents());
+        this.setState({ loading: false });
     };
 
     formatDate = moment => {
@@ -287,7 +318,7 @@ class App extends PureComponent {
     };
 
     changeCalendarHandler = id => {
-        this.setState({ selectedCalendar: id });
+        this.setState({ selectedCalendar: id }, () => this.createCalendar());
     };
 
     toggleCalendarDialog = () => {
@@ -411,6 +442,32 @@ class App extends PureComponent {
         this.addCurrentEventsToActions();
     }
 
+    addRule = (day, start, end) => {
+        const view = this.calendar.getView();
+
+        const eventStart = view.start.clone();
+
+        eventStart.isoWeekday(day);
+
+        eventStart.hours(start.substr(0, 2));
+        eventStart.minutes(start.substr(2, 2));
+
+        const eventEnd = view.start.clone().isoWeekday(day);
+        eventEnd.hours(end.substr(0, 2));
+        eventEnd.minutes(end.substr(2, 2));
+
+        const event = {
+            title: '',
+            start: eventStart.format('YYYY-MM-DD HH:mm:ss'),
+            end: eventEnd.format('YYYY-MM-DD HH:mm:ss'),
+            day_of_week: day,
+            video_id: 9999,
+            rendering: 'background'
+        }
+
+        this.calendar.addEventSource([event]);
+    }
+
 
 
     render() {
@@ -442,6 +499,7 @@ class App extends PureComponent {
                     selectedCalendar={selectedCalendar}
                     toggleCalendarDialog={this.toggleCalendarDialog}
                     changeCalendarHandler={this.changeCalendarHandler}
+                    addRule={this.addRule}
                 />
                 <div
                     className="calendar-container"
@@ -547,7 +605,7 @@ class App extends PureComponent {
                                 >
                                     <MenuItem dense value={0}>
                                         Doesn't repeat
-                  </MenuItem>
+                                     </MenuItem>
                                     <MenuItem value={1}>Repeat weekly</MenuItem>
                                 </Select>
                             )}
@@ -555,7 +613,7 @@ class App extends PureComponent {
                         <CardActions>
                             <Button onClick={this.onEventDelete} color="primary">
                                 <Delete style={{ marginRight: 10 }} /> Delete
-              </Button>
+                        </Button>
                         </CardActions>
                     </Card>
                 </Popover>
@@ -591,6 +649,7 @@ class App extends PureComponent {
                         </IconButton>
                     }
                 />
+                <LoadingModal show={this.state.loading} />
             </div>
         );
     }
