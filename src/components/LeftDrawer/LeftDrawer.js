@@ -1,4 +1,4 @@
-import React, { PureComponent } from "react";
+import React, { PureComponent, Fragment } from "react";
 import {
   Drawer,
   List,
@@ -23,7 +23,8 @@ import {
   Button,
   CardActions,
   Popper,
-  ClickAwayListener
+  ClickAwayListener,
+  ListItemSecondaryAction
 } from "@material-ui/core";
 import {
   Search,
@@ -37,7 +38,8 @@ import {
   Event,
   Add,
   Receipt,
-  KeyboardBackspace
+  KeyboardBackspace,
+  Delete
 } from "@material-ui/icons";
 import axios from "./../../axios";
 import dragula from "fullcalendar/dist/dragula.min.js";
@@ -75,10 +77,10 @@ export default class LeftDrawer extends PureComponent {
       to: null
     },
     anchorElCalendar: null,
-    view: 'CLASS_OVERVIEW',
+    view: "CLASS_OVERVIEW",
     rule: {
-      start: '',
-      end: '',
+      start: "",
+      end: "",
       day: 1
     }
   };
@@ -158,27 +160,30 @@ export default class LeftDrawer extends PureComponent {
     this.setState({ filters });
   };
 
-  handleClick = (index) => {
+  handleClick = index => {
     if (this.props.isReplacing) {
       const replacing = { ...this.state.replacing };
       const content = [...this.state.content];
       const entry = content[index];
       if (!replacing.from && entry !== this.state.replacing.to) {
         replacing.from = entry;
-      }
-      else if (this.state.replacing.from === entry) {
+      } else if (this.state.replacing.from === entry) {
         console.log("same item");
         replacing.from = null;
-      }
-      else if (!this.state.replacing.to && entry !== this.state.replacing.from) {
+      } else if (
+        !this.state.replacing.to &&
+        entry !== this.state.replacing.from
+      ) {
         replacing.to = entry;
-      }
-      else if (this.state.replacing.to === entry) {
+      } else if (this.state.replacing.to === entry) {
         replacing.to = null;
       }
       this.setState({ replacing }, () => {
         if (this.state.replacing.to && this.state.replacing.from) {
-          this.props.replace(this.state.replacing.from.indslagid, this.state.replacing.to);
+          this.props.replace(
+            this.state.replacing.from.indslagid,
+            this.state.replacing.to
+          );
           setTimeout(() => {
             const replacing = { ...this.state.replacing };
             replacing.to = null;
@@ -189,44 +194,76 @@ export default class LeftDrawer extends PureComponent {
         }
       });
     }
-  }
+  };
 
   addCalendar = () => {
     this.setState({ anchorElCalendar: null });
     this.props.toggleCalendarDialog();
-  }
+  };
 
   toggleCalendarPopper = event => {
     console.log("toggleCalendarPopper", event);
     if (!this.state.anchorElCalendar) {
       this.setState({ anchorElCalendar: event.currentTarget });
-    }
-    else {
+    } else {
       this.setState({ anchorElCalendar: null });
     }
-  }
+  };
 
   onClickAway = event => {
-    console.log((event.target !== document.querySelector("#button path")));
-    if (event.target.toString() !== document.querySelector("#button path").toString()) {
+    console.log(event.target !== document.querySelector("#button path"));
+    if (
+      event.target.toString() !==
+      document.querySelector("#button path").toString()
+    ) {
       this.setState({ anchorElCalendar: null });
     }
-  }
+  };
 
   handleViewChange = () => {
-    if (this.state.view == 'CLASS_OVERVIEW') {
-      this.setState({ view: 'KEYS' });
+    if (this.state.view === "CLASS_OVERVIEW") {
+      this.setState({ view: "KEYS" });
+    } else {
+      this.setState({ view: "CLASS_OVERVIEW" });
     }
-    else {
-      this.setState({ view: 'CLASS_OVERVIEW' });
-    }
-  }
+  };
 
-  handleRuleChange = (event) => {
+  handleRuleChange = event => {
     const rule = { ...this.state.rule };
     rule[event.target.name] = event.target.value;
     this.setState({ rule });
-  }
+  };
+
+  addRule = () => {
+    const { rule } = this.state;
+    const newRule = {
+      day: rule.day,
+      start: rule.start,
+      end: rule.end
+    };
+    if (newRule.start && newRule.end) {
+      this.props.addRule(newRule.day, newRule.start, newRule.end);
+    }
+  };
+
+  mapDay = day => {
+    switch (day) {
+      case 1:
+        return "Monday";
+      case 2:
+        return "Tuesday";
+      case 3:
+        return "Wednesday";
+      case 4:
+        return "Thursday";
+      case 5:
+        return "Friday";
+      case 6:
+        return "Saturday";
+      case 7:
+        return "Sunday";
+    }
+  };
 
   render() {
     const {
@@ -247,14 +284,15 @@ export default class LeftDrawer extends PureComponent {
 
     let localMatches = 0;
     let classes = [];
-    if (view == 'CLASS_OVERVIEW') {
+    if (view === "CLASS_OVERVIEW") {
       classes = content.map((contentEntry, contIndex) => {
         if (
           contentEntry.sf_engelsktitel
             .toLowerCase()
             .includes(search.toLowerCase()) &&
           contentEntry.indslagtypeid === eventType &&
-          (contentEntry.sf_level === filters.level || filters.level === "None") &&
+          (contentEntry.sf_level === filters.level ||
+            filters.level === "None") &&
           (contentEntry.sf_kategori === filters.category ||
             filters.category === "None") &&
           localMatches < matches
@@ -266,11 +304,11 @@ export default class LeftDrawer extends PureComponent {
               button
               data-event={`{ "title" : "${
                 contentEntry.sf_engelsktitel
-                }", "duration" : "${contentEntry.sf_varighed}", "video_id" : ${
+              }", "duration" : "${contentEntry.sf_varighed}", "video_id" : ${
                 contentEntry.indslagid
-                }, "sf_masterid" : ${contentEntry.sf_masterid}, "navn" : "${
+              }, "sf_masterid" : ${contentEntry.sf_masterid}, "navn" : "${
                 contentEntry.navn
-                }", 
+              }", 
             "level": "${contentEntry.sf_level}"}`}
               key={contentEntry.indslagid}
               onClick={() => this.handleClick(contIndex)}
@@ -278,12 +316,22 @@ export default class LeftDrawer extends PureComponent {
               <Avatar
                 src={`https://nfoo-server.com/wexerpreview/${
                   contentEntry.sf_masterid
-                  }_${contentEntry.navn.substr(
-                    0,
-                    contentEntry.navn.length - 4
-                  )}Square.jpg`}
+                }_${contentEntry.navn.substr(
+                  0,
+                  contentEntry.navn.length - 4
+                )}Square.jpg`}
               />
-              <ListItemText secondary={contentEntry === replacing.from ? 'Select a class to replace this one ...' : contentEntry === replacing.to ? 'Replacing with this class ...' : ''}>{contentEntry.sf_engelsktitel}</ListItemText>
+              <ListItemText
+                secondary={
+                  contentEntry === replacing.from
+                    ? "Select a class to replace this one ..."
+                    : contentEntry === replacing.to
+                      ? "Replacing with this class ..."
+                      : ""
+                }
+              >
+                {contentEntry.sf_engelsktitel}
+              </ListItemText>
             </ListItem>
           );
         } else if (
@@ -291,7 +339,8 @@ export default class LeftDrawer extends PureComponent {
             .toLowerCase()
             .includes(search.toLowerCase()) &&
           contentEntry.indslagtypeid === eventType &&
-          (contentEntry.sf_level === filters.level || filters.level === "None") &&
+          (contentEntry.sf_level === filters.level ||
+            filters.level === "None") &&
           (contentEntry.sf_kategori === filters.category ||
             filters.category === "None")
         ) {
@@ -313,30 +362,69 @@ export default class LeftDrawer extends PureComponent {
           </ListItem>
         );
       }
-    }
-    else {
-      classes =
-        <ListItem>
-          <div className="flex column">
-            <ListItemText><strong>Rule:</strong> Disable On Demand</ListItemText>
-            <Grid container alignItems="center">
-              <Grid item xs={3}>
-                <span>Date</span>
+    } else {
+      classes = (
+        <Fragment>
+          <ListItem>
+            <div className="flex column">
+              <ListItemText>
+                <strong>Rule:</strong> Disable On Demand
+              </ListItemText>
+              <Grid container alignItems="center">
+                <Grid item xs={3}>
+                  <span>Date</span>
+                </Grid>
+                <Grid
+                  item
+                  xs={9}
+                  style={{ display: "flex", alignItems: "center" }}
+                >
+                  <Select
+                    value={rule.day}
+                    disableUnderline
+                    onChange={this.handleRuleChange}
+                    name="day"
+                  >
+                    <MenuItem value={1}>Monday</MenuItem>
+                  </Select>
+                  <div>
+                    <input
+                      type="time"
+                      value={rule.start}
+                      name="start"
+                      onChange={this.handleRuleChange}
+                    />
+                    <input
+                      type="time"
+                      value={rule.end}
+                      name="end"
+                      onChange={this.handleRuleChange}
+                    />
+                  </div>
+                </Grid>
               </Grid>
-              <Grid item xs={9} style={{ display: 'flex', alignItems: 'center' }}>
-                <Select value={rule.day} disableUnderline onChange={this.handleRuleChange} name="day">
-                  <MenuItem value={1}>Monday</MenuItem>
-                </Select>
-                <div>
-                  <input type="time" value={rule.start} name="start" onChange={this.handleRuleChange} />
-                  <input type="time" value={rule.end} name="end" onChange={this.handleRuleChange} />
-                </div>
-              </Grid>
-            </Grid>
-            <Divider style={{ marginTop: 10 }} />
-            <Button color="primary" onClick={() => this.props.addRule(rule.day, rule.start, rule.end)}>Add rule</Button>
+              <Divider style={{ marginTop: 10 }} />
+              <Button color="primary" onClick={this.addRule}>
+                Add rule
+              </Button>
+            </div>
+          </ListItem>
+          <div className="rules-container">
+            {this.props.rules.map((rule, index) => (
+              <ListItem>
+                <ListItemText secondary={`Rule no. ${index}`}>
+                  {this.mapDay(rule.day_of_week)}, {rule.start} - {rule.end}
+                </ListItemText>
+                <ListItemSecondaryAction>
+                  <IconButton onClick={() => this.props.deleteRule(index)}>
+                    <Delete />
+                  </IconButton>
+                </ListItemSecondaryAction>
+              </ListItem>
+            ))}
           </div>
-        </ListItem>
+        </Fragment>
+      );
     }
 
     // filterText
@@ -362,12 +450,22 @@ export default class LeftDrawer extends PureComponent {
         PaperProps={{ style: { width: 290 } }}
       >
         <div className="flex center">
-          <Tooltip title={this.props.calendars.find(cl => cl.id === this.props.selectedCalendar).name}>
+          <Tooltip
+            title={
+              this.props.calendars.find(
+                cl => cl.id === this.props.selectedCalendar
+              ).name
+            }
+          >
             <IconButton onClick={this.toggleCalendarPopper} id="button">
               <Event />
             </IconButton>
           </Tooltip>
-          <Popper open={Boolean(anchorElCalendar)} anchorEl={anchorElCalendar} style={{ zIndex: 9999 }}>
+          <Popper
+            open={Boolean(anchorElCalendar)}
+            anchorEl={anchorElCalendar}
+            style={{ zIndex: 9999 }}
+          >
             <ClickAwayListener onClickAway={this.onClickAway}>
               <Card elevation={5}>
                 <List>
@@ -375,22 +473,39 @@ export default class LeftDrawer extends PureComponent {
                     <Avatar>
                       <Event />
                     </Avatar>
-                    <ListItemText secondary={`ID: ${this.props.selectedCalendar}`}>
-                      {this.props.calendars.find(cl => cl.id === this.props.selectedCalendar).name}
+                    <ListItemText
+                      secondary={`ID: ${this.props.selectedCalendar}`}
+                    >
+                      {
+                        this.props.calendars.find(
+                          cl => cl.id === this.props.selectedCalendar
+                        ).name
+                      }
                     </ListItemText>
                   </ListItem>
                   <Divider />
-                  {
-                    this.props.calendars.map(calendar => calendar.id !== this.props.selectedCalendar &&
-                      <ListItem button onClick={() => this.props.changeCalendarHandler(calendar.id)}>
-                        <ListItemText secondary={`ID: ${calendar.id}`}>
-                          {calendar.name}
-                        </ListItemText>
-                      </ListItem>
-                    )}
+                  {this.props.calendars.map(
+                    calendar =>
+                      calendar.id !== this.props.selectedCalendar && (
+                        <ListItem
+                          button
+                          onClick={() =>
+                            this.props.changeCalendarHandler(calendar.id)
+                          }
+                        >
+                          <ListItemText secondary={`ID: ${calendar.id}`}>
+                            {calendar.name}
+                          </ListItemText>
+                        </ListItem>
+                      )
+                  )}
                   <Divider />
                   <CardActions>
-                    <Button variant="outlined" color="secondary" onClick={this.addCalendar}>
+                    <Button
+                      variant="outlined"
+                      color="secondary"
+                      onClick={this.addCalendar}
+                    >
                       New <Add style={{ marginLeft: 5 }} />
                     </Button>
                   </CardActions>
@@ -487,10 +602,10 @@ export default class LeftDrawer extends PureComponent {
               </Card>
             </Popover>
             <IconButton onClick={this.handleViewChange}>
-              {view === 'CLASS_OVERVIEW' ? <Receipt /> : <KeyboardBackspace />}
+              {view === "CLASS_OVERVIEW" ? <Receipt /> : <KeyboardBackspace />}
             </IconButton>
           </ListItem>
-          <div className="test">{classes}</div>
+          <div className="test flex column">{classes}</div>
           <BottomNavigation
             value={showEventType}
             onChange={this.onEventTypeChange}
