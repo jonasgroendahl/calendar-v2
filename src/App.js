@@ -75,7 +75,8 @@ class App extends PureComponent {
       showEventType: 0,
       aIndex: 0,
       loading: false,
-      log: []
+      log: [],
+      logId: 0
     };
   }
 
@@ -499,7 +500,7 @@ class App extends PureComponent {
     this.setState({ rules: newRulesArray });
   };
 
-  addToLog = (message, event) => {
+  addToLog = async (message, event) => {
     const msg = {
       message,
       date: moment().format('YYYY-MM-DD HH:mm:ss'),
@@ -507,7 +508,15 @@ class App extends PureComponent {
       video_id: event ? event.video_id : '--',
       start: event ? event.start.format('YYYY-MM-DD HH:mm:ss') : '--'
     }
-    this.setState({ log: [...this.state.log, msg] });
+    const log = [...this.state.log, msg];
+    if (!this.state.logId) {
+      const result = await axios.post(`/v2/event/logs`, log);
+      this.setState({ logId: result.data });
+    }
+    else {
+      axios.put(`/v2/event/logs/${this.state.logId}`, log);
+    }
+    this.setState({ log });
   }
 
   toggleLog = () => {
@@ -714,7 +723,7 @@ class App extends PureComponent {
           }
         />
         <LoadingModal show={this.state.loading} />
-        <Log log={log} show={isLogOpen} toggleLog={this.toggleLog} />
+        {isLogOpen && <Log log={log} show={isLogOpen} toggleLog={this.toggleLog} />}
       </div>
     );
   }

@@ -1,7 +1,18 @@
 import React, { PureComponent } from 'react'
 import { Table, Dialog, DialogTitle, DialogContent, TableHead, TableRow, TableCell, TableBody, DialogActions, Button } from "@material-ui/core";
+import axios from "../../axios";
 
 export default class Log extends PureComponent {
+
+    state = {
+        log: []
+    }
+
+    async componentDidMount() {
+        const result = await axios.get(`/v2/event/logs`);
+        console.log("what did we get", result);
+        this.setState({ log: result.data });
+    }
     render() {
         return (
             <Dialog open={this.props.show}>
@@ -19,7 +30,7 @@ export default class Log extends PureComponent {
                         </TableHead>
                         <TableBody>
                             {
-                                this.props.log.map(l =>
+                                this.state.log.map(l =>
                                     <TableRow>
                                         <TableCell>{l.message}</TableCell>
                                         <TableCell>{l.date}</TableCell>
