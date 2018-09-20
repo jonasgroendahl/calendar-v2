@@ -29,6 +29,8 @@ export default class ActionDialog extends PureComponent {
     };
 
     render() {
+        const { days, copyOneDay } = this.state;
+
         return (
             <Dialog open={this.props.show}>
                 <DialogTitle>
@@ -38,16 +40,16 @@ export default class ActionDialog extends PureComponent {
                     <List>
                         <Grid container>
                             <Grid item xs={8}>
-                                <ListItem button onClick={() => this.props.copy(this.state.copyOneDay.start, this.state.copyOneDay.end)}>
+                                <ListItem button onClick={() => this.props.copy(copyOneDay.start, copyOneDay.end)}>
                                     <ListItemText secondary="Select start and end day of the week. This will clear classes on the end day.">Copy 1 day.</ListItemText>
                                 </ListItem>
                             </Grid>
                             <Grid item xs={4}>
-                                <Select value={this.state.copyOneDay.start} onChange={this.handleChange} name="start" fullWidth>
-                                    {this.state.days.map(day => this.state.copyOneDay.end !== day.value && <MenuItem value={day.value} key={`start_${day.value}`}>{day.text}</MenuItem>)}
+                                <Select value={copyOneDay.start} onChange={this.handleChange} name="start" fullWidth>
+                                    {days.map(day => copyOneDay.end !== day.value && <MenuItem value={day.value} key={`start_${day.value}`}>{day.text}</MenuItem>)}
                                 </Select>
-                                <Select value={this.state.copyOneDay.end} onChange={this.handleChange} name="end" fullWidth style={{ marginTop: 5 }}>
-                                    {this.state.days.map(day => this.state.copyOneDay.start !== day.value && <MenuItem value={day.value} key={`end_${day.value}`}>{day.text}</MenuItem>)}
+                                <Select value={copyOneDay.end} onChange={this.handleChange} name="end" fullWidth style={{ marginTop: 5 }}>
+                                    {days.map(day => copyOneDay.start !== day.value && <MenuItem value={day.value} key={`end_${day.value}`}>{day.text}</MenuItem>)}
                                 </Select>
                             </Grid>
                         </Grid>
@@ -56,6 +58,9 @@ export default class ActionDialog extends PureComponent {
                         </ListItem>
                         <ListItem button onClick={this.props.delete}>
                             <ListItemText secondary="This will delete all entries in the calendar.">Clear calendar.</ListItemText>
+                        </ListItem>
+                        <ListItem button onClick={this.props.toggleLog}>
+                            <ListItemText secondary="Show the log for this calendar.">Show log.</ListItemText>
                         </ListItem>
                     </List>
                 </DialogContent>

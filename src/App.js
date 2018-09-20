@@ -44,6 +44,7 @@ import LeftDrawer from "./components/LeftDrawer/LeftDrawer";
 import SettingsDialog from "./components/SettingsDialog/SettingsDialog";
 import ActionDialog from "./components/ActionDialog/ActionDialog";
 import LoadingModal from "./components/Loading/Loading";
+import Log from "./components/LogComponent/Log";
 
 class App extends PureComponent {
   constructor(props) {
@@ -58,6 +59,7 @@ class App extends PureComponent {
       isCalendarDialogOpen: false,
       isSettingsDialogOpen: false,
       isActionDialogOpen: false,
+      isLogOpen: false,
       isReplacing: false,
       selectedEvent: null,
       selectedEventDetails: { duration: "", level: "", category: "" },
@@ -72,7 +74,8 @@ class App extends PureComponent {
       view: "agendaWeek",
       showEventType: 0,
       aIndex: 0,
-      loading: false
+      loading: false,
+      log: []
     };
   }
 
@@ -132,10 +135,8 @@ class App extends PureComponent {
       end: this.formatDate(event.end),
       day_of_week: event.start.isoWeekday()
     });
-    this.actions.push(this.calendar.clientEvents());
-    const { aIndex } = this.state;
-    this.setState({ aIndex: aIndex + 1 });
-    console.log("mooove", res);
+    this.addCurrentEventsToActions();
+    this.addToLog('Move', event);
   };
 
   dayClick = event => {
@@ -189,6 +190,7 @@ class App extends PureComponent {
       event.durationEditable = true;
     }
     this.calendar.updateEvent(event);
+    this.addToLog('Add', event);
     this.addCurrentEventsToActions();
   };
 
@@ -281,6 +283,7 @@ class App extends PureComponent {
   onEventDelete = () => {
     axios.delete(`/v2/event/${this.state.selectedEventDetails.id}`);
     this.calendar.removeEvents(this.state.selectedEventDetails._id);
+    this.addToLog('Delete', this.state.selectedEventDetails);
     this.setState({ selectedEvent: null });
     this.addCurrentEventsToActions();
   };
@@ -379,6 +382,7 @@ class App extends PureComponent {
   redoHandler = () => {
     const { aIndex } = this.state;
     this.calendar.removeEvents();
+    this.addToLog('Redo');
     this.setState({ aIndex: aIndex + 1 }, () =>
       this.calendar.addEventSource(this.actions[this.state.aIndex])
     );
@@ -389,6 +393,7 @@ class App extends PureComponent {
     console.log(aIndex);
     console.log(this.actions);
     this.calendar.removeEvents();
+    this.addToLog('Undo')
     this.setState({ aIndex: aIndex - 1 }, () =>
       this.calendar.addEventSource(this.actions[this.state.aIndex])
     );
@@ -444,6 +449,8 @@ class App extends PureComponent {
       e.video_id = eventTo.video_id;
       e.end = e.start.clone().add(eventTo.sf_varighedsec, 'seconds');
       e.img = `https://nfoo-server.com/wexerpreview/${eventTo.sf_masterid}_${eventTo.navn.substr(0, eventTo.navn.length - 4)}Square.jpg`;
+      e.level = eventTo.sf_level;
+      e.duration = eventTo.sf_varighed;
       return e;
     });
     this.calendar.updateEvents(eventsMapped);
@@ -492,11 +499,30 @@ class App extends PureComponent {
     this.setState({ rules: newRulesArray });
   };
 
+  addToLog = (message, event) => {
+    const msg = {
+      message,
+      date: moment().format('YYYY-MM-DD HH:mm:ss'),
+      id: event ? event.id : '--',
+      video_id: event ? event.video_id : '--',
+      start: event ? event.start.format('YYYY-MM-DD HH:mm:ss') : '--'
+    }
+    this.setState({ log: [...this.state.log, msg] });
+  }
+
+  toggleLog = () => {
+    this.toggleActionDialog();
+    this.setState({ isLogOpen: !this.state.isLogOpen });
+  }
+
+
+
   render() {
     const {
       isDrawerOpen,
       isTypeDialogOpen,
       isSettingsDialogOpen,
+      isLogOpen,
       selectedEvent,
       selectedEventDetails,
       type,
@@ -506,7 +532,8 @@ class App extends PureComponent {
       isActionDialogOpen,
       isReplacing,
       calendars,
-      rules
+      rules,
+      log
     } = this.state;
 
     // <Tooltip title="Les Mills Player">
@@ -674,6 +701,7 @@ class App extends PureComponent {
           delete={this.deleteAllHandler}
           copy={this.copyOneDayHandler}
           replace={this.toggleIsReplacing}
+          toggleLog={this.toggleLog}
         />
         <Snackbar
           anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
@@ -686,6 +714,7 @@ class App extends PureComponent {
           }
         />
         <LoadingModal show={this.state.loading} />
+        <Log log={log} show={isLogOpen} toggleLog={this.toggleLog} />
       </div>
     );
   }
