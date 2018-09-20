@@ -105,7 +105,7 @@ export default class LeftDrawer extends PureComponent {
     this.setState({ content: content.data });
   }
 
-  componentDidUpdate(_, prevState) {
+  componentDidUpdate(prevProps, prevState) {
     if (prevState.content.length === 0 && this.state.content.length > 0) {
       console.log("Content was added, making them draggable");
       const draggableEvents = document.querySelector(".test");
@@ -119,6 +119,9 @@ export default class LeftDrawer extends PureComponent {
           this.setState({ matches: matches + 10 });
         }
       });
+    }
+    if (prevProps.isReplacing !== this.props.isReplacing) {
+      this.setState({ replacing: { to: null, from: null } });
     }
   }
 
@@ -262,6 +265,8 @@ export default class LeftDrawer extends PureComponent {
         return "Saturday";
       case 7:
         return "Sunday";
+      default:
+        return "Unknown day";
     }
   };
 
@@ -285,18 +290,21 @@ export default class LeftDrawer extends PureComponent {
     let localMatches = 0;
     let classes = [];
     if (view === "CLASS_OVERVIEW") {
+      let eventsToReplace;
+      const isReplacing = this.props.isReplacing && !replacing.from;
+      if (isReplacing) {
+        eventsToReplace = new Set(this.props.calendar.clientEvents().map(event => event.video_id));
+        console.log(eventsToReplace);
+      }
       classes = content.map((contentEntry, contIndex) => {
-        if (
-          contentEntry.sf_engelsktitel
-            .toLowerCase()
-            .includes(search.toLowerCase()) &&
-          contentEntry.indslagtypeid === eventType &&
-          (contentEntry.sf_level === filters.level ||
-            filters.level === "None") &&
-          (contentEntry.sf_kategori === filters.category ||
-            filters.category === "None") &&
-          localMatches < matches
-        ) {
+        let match = contentEntry.sf_engelsktitel.toLowerCase().includes(search.toLowerCase()) && contentEntry.indslagtypeid === eventType &&
+          (contentEntry.sf_level === filters.level || filters.level === "None") &&
+          (contentEntry.sf_kategori === filters.category || filters.category === "None") &&
+          localMatches < matches;
+        if (isReplacing) {
+          match = isReplacing && eventsToReplace.has(contentEntry.indslagid);
+        }
+        if (match) {
           localMatches++;
           return (
             <ListItem
@@ -304,11 +312,11 @@ export default class LeftDrawer extends PureComponent {
               button
               data-event={`{ "title" : "${
                 contentEntry.sf_engelsktitel
-              }", "duration" : "${contentEntry.sf_varighed}", "video_id" : ${
+                }", "duration" : "${contentEntry.sf_varighed}", "video_id" : ${
                 contentEntry.indslagid
-              }, "sf_masterid" : ${contentEntry.sf_masterid}, "navn" : "${
+                }, "sf_masterid" : ${contentEntry.sf_masterid}, "navn" : "${
                 contentEntry.navn
-              }", 
+                }", 
             "level": "${contentEntry.sf_level}"}`}
               key={contentEntry.indslagid}
               onClick={() => this.handleClick(contIndex)}
@@ -316,10 +324,10 @@ export default class LeftDrawer extends PureComponent {
               <Avatar
                 src={`https://nfoo-server.com/wexerpreview/${
                   contentEntry.sf_masterid
-                }_${contentEntry.navn.substr(
-                  0,
-                  contentEntry.navn.length - 4
-                )}Square.jpg`}
+                  }_${contentEntry.navn.substr(
+                    0,
+                    contentEntry.navn.length - 4
+                  )}Square.jpg`}
               />
               <ListItemText
                 secondary={

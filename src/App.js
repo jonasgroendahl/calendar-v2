@@ -35,8 +35,7 @@ import {
   Redo,
   Undo,
   MoreVert,
-  Close,
-  Receipt
+  Close
 } from "@material-ui/icons";
 import IconMenu from "@material-ui/icons/Menu";
 import SelectTypeDialog from "./components/SelectTypeDialog/SelectTypeDialog";
@@ -105,20 +104,20 @@ class App extends PureComponent {
       snapDuration: "00:01:00",
       height: "parent",
       droppable: true,
-      viewChange: function() {
+      viewChange: function () {
         this.calendar.rerenderEvents();
       },
       eventReceive: this.eventReceive,
-      eventClick: function(event) {
+      eventClick: function (event) {
         self.eventClick(this, event);
       },
-      eventResize: function() {
+      eventResize: function () {
         self.setState({ selectedEvent: null });
       },
       eventRender: this.eventRender,
       eventDrop: this.eventMove,
       dayClick: this.dayClick,
-      selectOverlap: function(event) {
+      selectOverlap: function (event) {
         console.log("sup");
         return true;
       }
@@ -165,7 +164,7 @@ class App extends PureComponent {
     let day_of_week = 0;
     event.img = `https://nfoo-server.com/wexerpreview/${
       event.sf_masterid
-    }_${event.navn.substr(0, event.navn.length - 4)}Square.jpg`;
+      }_${event.navn.substr(0, event.navn.length - 4)}Square.jpg`;
     day_of_week = event.start.isoWeekday();
     event.day_of_week = day_of_week;
 
@@ -222,8 +221,8 @@ class App extends PureComponent {
             seperation_count: event.seperation_count,
             img: event.sf_masterid
               ? `https://nfoo-server.com/wexerpreview/${
-                  event.sf_masterid
-                }_${event.navn.substr(0, event.navn.length - 4)}Square.jpg`
+              event.sf_masterid
+              }_${event.navn.substr(0, event.navn.length - 4)}Square.jpg`
               : "https://historielaerer.dk/wp-content/plugins/wp-ulike/assets/img/no-thumbnail.png",
             duration: event.sf_varighed,
             level: event.sf_level,
@@ -375,7 +374,7 @@ class App extends PureComponent {
     this.setState({ players: modifiedPlayerArr });
   };
 
-  copyHandler = () => {};
+  copyHandler = () => { };
 
   redoHandler = () => {
     const { aIndex } = this.state;
@@ -397,6 +396,7 @@ class App extends PureComponent {
 
   addCurrentEventsToActions = () => {
     const events = this.calendar.clientEvents();
+    console.log(events);
     this.actions.push(events);
     this.setState({ aIndex: this.actions.length - 1 });
   };
@@ -417,6 +417,7 @@ class App extends PureComponent {
       const e = { ...event };
       e.start = e.start.isoWeekday(end);
       e.end = e.end.isoWeekday(end);
+      e.day_of_week = end;
       return e;
     });
     this.calendar.addEventSource(eventsMapped);
@@ -434,13 +435,15 @@ class App extends PureComponent {
     const events = this.calendar.clientEvents(
       event => event.video_id === fromId
     );
+    console.log("eventTo", eventTo);
     const eventsMapped = events.map(event => {
       const e = { ...event };
+      console.log(event);
       e.category = eventTo.sf_kategori;
       e.title = eventTo.sf_engelsktitel;
-      e.img = `https://nfoo-server.com/wexerpreview/${
-        eventTo.sf_masterid
-      }_${eventTo.navn.substr(0, eventTo.navn.length - 4)}Square.jpg`;
+      e.video_id = eventTo.video_id;
+      e.end = e.start.clone().add(eventTo.sf_varighedsec, 'seconds');
+      e.img = `https://nfoo-server.com/wexerpreview/${eventTo.sf_masterid}_${eventTo.navn.substr(0, eventTo.navn.length - 4)}Square.jpg`;
       return e;
     });
     this.calendar.updateEvents(eventsMapped);
@@ -522,6 +525,7 @@ class App extends PureComponent {
           addRule={this.addRule}
           rules={rules}
           deleteRule={this.deleteRule}
+          calendar={this.calendar}
         />
         <div
           className="calendar-container"
@@ -623,8 +627,8 @@ class App extends PureComponent {
                     ) : selectedEventDetails.level === "Intermediate" ? (
                       <SignalCellular2Bar />
                     ) : (
-                      <SignalCellular0Bar />
-                    )}
+                          <SignalCellular0Bar />
+                        )}
                   </Avatar>
                   <ListItemText primary={selectedEventDetails.level} />
                 </ListItem>
