@@ -44,10 +44,10 @@ export default class ActionDialog extends PureComponent {
                             </Grid>
                             <Grid item xs={4}>
                                 <Select value={this.state.copyOneDay.start} onChange={this.handleChange} name="start" fullWidth>
-                                    {this.state.days.map(day => <MenuItem value={day.value} key={`start_${day.value}`}>{day.text}</MenuItem>)}
+                                    {this.state.days.map(day => this.state.copyOneDay.end !== day.value && <MenuItem value={day.value} key={`start_${day.value}`}>{day.text}</MenuItem>)}
                                 </Select>
                                 <Select value={this.state.copyOneDay.end} onChange={this.handleChange} name="end" fullWidth style={{ marginTop: 5 }}>
-                                    {this.state.days.map(day => <MenuItem value={day.value} key={`end_${day.value}`}>{day.text}</MenuItem>)}
+                                    {this.state.days.map(day => this.state.copyOneDay.start !== day.value && <MenuItem value={day.value} key={`end_${day.value}`}>{day.text}</MenuItem>)}
                                 </Select>
                             </Grid>
                         </Grid>
