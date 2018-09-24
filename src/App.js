@@ -179,14 +179,10 @@ class App extends PureComponent {
 
   eventRender = (event, element) => {
     console.log("eventRendering");
-    if (event.video_id === 9999) {
-      console.log("On demand found!");
-    } else if (event.video_id === 42815) {
-    } else {
-      element.style.backgroundImage = `url(${event.img})`;
-      element.style.backgroundSize = `cover`;
-      element.style.backgroundRepeat = `no-repeat`;
-    }
+
+    element.style.backgroundImage = `url(${event.img})`;
+    element.style.backgroundSize = `cover`;
+    element.style.backgroundRepeat = `no-repeat`;
   };
 
   eventReceive = async event => {
