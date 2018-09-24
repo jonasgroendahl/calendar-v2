@@ -92,9 +92,21 @@ class App extends PureComponent {
   deleteKeybind = event => {
     if (event.keyCode === 46 && this.eventFocused) {
       console.log("Deleting", this.eventFocused);
-      this.calendar.removeEvents(this.eventFocused.id);
+      this.calendar.removeEvents(this.eventFocused._id);
+      if (this.eventFocused.id) {
+        axios.delete(`/v2/event/${this.eventFocused.id}`);
+      }
       this.eventFocused = null;
+      this.addCurrentEventsToActions();
     }
+  };
+
+  onEventDelete = () => {
+    axios.delete(`/v2/event/${this.state.selectedEventDetails.id}`);
+    this.calendar.removeEvents(this.state.selectedEventDetails._id);
+    this.addToLog("Delete", this.state.selectedEventDetails);
+    this.setState({ selectedEvent: null });
+    this.addCurrentEventsToActions();
   };
 
   createCalendar = () => {
@@ -148,7 +160,6 @@ class App extends PureComponent {
 
   eventMouseover = event => {
     if (!this.eventFocused || this.eventFocused.id !== event.id) {
-      console.log("set new focused event", event);
       this.eventFocused = event;
     }
   };
@@ -165,6 +176,7 @@ class App extends PureComponent {
     } else {
       revertFunc();
       this.calendar.renderEvent({ ...event, id: null });
+      this.addCurrentEventsToActions();
     }
   };
 
@@ -303,14 +315,6 @@ class App extends PureComponent {
     selectedEventDetails.seperation_count = event.target.value;
     this.calendar.updateEvent(selectedEventDetails);
     this.setState({ selectedEventDetails });
-  };
-
-  onEventDelete = () => {
-    axios.delete(`/v2/event/${this.state.selectedEventDetails.id}`);
-    this.calendar.removeEvents(this.state.selectedEventDetails._id);
-    this.addToLog("Delete", this.state.selectedEventDetails);
-    this.setState({ selectedEvent: null });
-    this.addCurrentEventsToActions();
   };
 
   viewChangeHandler = event => {
