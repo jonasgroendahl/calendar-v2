@@ -76,6 +76,10 @@
   width: 100%;
 }
 
+.keybinds-list > * {
+  margin: 5px 0;
+}
+
 @media (max-width: 600px) {
   #leftdrawer > div {
     position: static;

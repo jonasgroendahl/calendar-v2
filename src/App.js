@@ -82,7 +82,20 @@ class App extends PureComponent {
 
   async componentDidMount() {
     this.createCalendar();
+    window.addEventListener("keydown", this.deleteKeybind);
   }
+
+  componentWillUnmount() {
+    window.removeEventListener("keydown", this.deleteKeybind);
+  }
+
+  deleteKeybind = event => {
+    if (event.keyCode === 46 && this.eventFocused) {
+      console.log("Deleting", this.eventFocused);
+      this.calendar.removeEvents(this.eventFocused.id);
+      this.eventFocused = null;
+    }
+  };
 
   createCalendar = () => {
     console.log("createCalendar");
@@ -110,6 +123,7 @@ class App extends PureComponent {
       height: "parent",
       droppable: true,
       eventOverlap: false,
+      eventMouseover: this.eventMouseover,
       viewChange: function() {
         this.calendar.rerenderEvents();
       },
@@ -121,7 +135,7 @@ class App extends PureComponent {
         self.setState({ selectedEvent: null });
       },
       eventRender: this.eventRender,
-      eventDrop: this.eventMove,
+      eventDrop: this.eventDrop,
       dayClick: this.dayClick,
       selectOverlap: function(event) {
         console.log("sup");
@@ -132,14 +146,26 @@ class App extends PureComponent {
     this.calendar.render();
   };
 
-  eventMove = async (event, delta) => {
-    const res = await axios.put(`/v2/event/${event.id}`, {
-      start: this.formatDate(event.start),
-      end: this.formatDate(event.end),
-      day_of_week: event.start.isoWeekday()
-    });
-    this.addCurrentEventsToActions();
-    this.addToLog("Move", event);
+  eventMouseover = event => {
+    if (!this.eventFocused || this.eventFocused.id !== event.id) {
+      console.log("set new focused event", event);
+      this.eventFocused = event;
+    }
+  };
+
+  eventDrop = (event, _, revertFunc, mouseEvent) => {
+    if (!mouseEvent.shiftKey) {
+      axios.put(`/v2/event/${event.id}`, {
+        start: this.formatDate(event.start),
+        end: this.formatDate(event.end),
+        day_of_week: event.start.isoWeekday()
+      });
+      this.addCurrentEventsToActions();
+      this.addToLog("Move", event);
+    } else {
+      revertFunc();
+      this.calendar.renderEvent({ ...event, id: null });
+    }
   };
 
   dayClick = event => {

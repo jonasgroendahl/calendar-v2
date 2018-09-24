@@ -293,13 +293,21 @@ export default class LeftDrawer extends PureComponent {
       let eventsToReplace;
       const isReplacing = this.props.isReplacing && !replacing.from;
       if (isReplacing) {
-        eventsToReplace = new Set(this.props.calendar.clientEvents().map(event => event.video_id));
+        eventsToReplace = new Set(
+          this.props.calendar.clientEvents().map(event => event.video_id)
+        );
         console.log(eventsToReplace);
       }
       classes = content.map((contentEntry, contIndex) => {
-        let match = contentEntry.sf_engelsktitel.toLowerCase().includes(search.toLowerCase()) && contentEntry.indslagtypeid === eventType &&
-          (contentEntry.sf_level === filters.level || filters.level === "None") &&
-          (contentEntry.sf_kategori === filters.category || filters.category === "None") &&
+        let match =
+          contentEntry.sf_engelsktitel
+            .toLowerCase()
+            .includes(search.toLowerCase()) &&
+          contentEntry.indslagtypeid === eventType &&
+          (contentEntry.sf_level === filters.level ||
+            filters.level === "None") &&
+          (contentEntry.sf_kategori === filters.category ||
+            filters.category === "None") &&
           localMatches < matches;
         if (isReplacing) {
           match = isReplacing && eventsToReplace.has(contentEntry.indslagid);
@@ -312,11 +320,11 @@ export default class LeftDrawer extends PureComponent {
               button
               data-event={`{ "title" : "${
                 contentEntry.sf_engelsktitel
-                }", "duration" : "${contentEntry.sf_varighed}", "video_id" : ${
+              }", "duration" : "${contentEntry.sf_varighed}", "video_id" : ${
                 contentEntry.indslagid
-                }, "sf_masterid" : ${contentEntry.sf_masterid}, "navn" : "${
+              }, "sf_masterid" : ${contentEntry.sf_masterid}, "navn" : "${
                 contentEntry.navn
-                }", 
+              }", 
             "level": "${contentEntry.sf_level}"}`}
               key={contentEntry.indslagid}
               onClick={() => this.handleClick(contIndex)}
@@ -324,10 +332,10 @@ export default class LeftDrawer extends PureComponent {
               <Avatar
                 src={`https://nfoo-server.com/wexerpreview/${
                   contentEntry.sf_masterid
-                  }_${contentEntry.navn.substr(
-                    0,
-                    contentEntry.navn.length - 4
-                  )}Square.jpg`}
+                }_${contentEntry.navn.substr(
+                  0,
+                  contentEntry.navn.length - 4
+                )}Square.jpg`}
               />
               <ListItemText
                 secondary={
@@ -394,6 +402,12 @@ export default class LeftDrawer extends PureComponent {
                     name="day"
                   >
                     <MenuItem value={1}>Monday</MenuItem>
+                    <MenuItem value={2}>Tuesday</MenuItem>
+                    <MenuItem value={3}>Wednesday</MenuItem>
+                    <MenuItem value={4}>Thursday</MenuItem>
+                    <MenuItem value={5}>Friday</MenuItem>
+                    <MenuItem value={6}>Saturday</MenuItem>
+                    <MenuItem value={7}>Sunday</MenuItem>
                   </Select>
                   <div>
                     <input
