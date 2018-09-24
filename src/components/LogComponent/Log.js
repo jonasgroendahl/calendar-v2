@@ -12,7 +12,8 @@ import {
   Button,
   TablePagination,
   TextField,
-  InputAdornment
+  InputAdornment,
+  TableSortLabel
 } from "@material-ui/core";
 import { Search } from "@material-ui/icons";
 import axios from "../../axios";
@@ -30,7 +31,8 @@ export default class Log extends PureComponent {
       { value: "video_id", text: "Video ID" },
       { value: "start", text: "Start" },
       { value: "ip", text: "IP address" }
-    ]
+    ],
+    sortOrder: 0
   };
 
   async componentDidMount() {
@@ -38,6 +40,21 @@ export default class Log extends PureComponent {
     console.log("what did we get", result);
     this.setState({ log: result.data });
   }
+
+  sort(value) {
+    const sortedArr = [...this.state.log];
+    sortedArr.sort((a, b) => {
+      if (a[value] > b[value]) {
+        return this.state.sortOrder ? 1 : -1;
+      } else if (a[value] < b[value]) {
+        return this.state.sortOrder ? -1 : 1;
+      }
+      return 0;
+    });
+    const sortOrder = Number(!this.state.sortOrder);
+    this.setState({ log: sortedArr, sortOrder });
+  }
+
   render() {
     const { rowsPerPage, page, search, attr } = this.state;
 
@@ -73,19 +90,18 @@ export default class Log extends PureComponent {
             <Table>
               <TableHead>
                 <TableRow>
-                  <TableCell>Action</TableCell>
-                  <TableCell>Date</TableCell>
-                  <TableCell>ID</TableCell>
-                  <TableCell>Video_ID</TableCell>
-                  <TableCell>Start</TableCell>
-                  <TableCell>IP</TableCell>
+                  {attr.map(att => (
+                    <TableCell onClick={() => this.sort(att.value)}>
+                      <TableSortLabel>{att.text}</TableSortLabel>
+                    </TableCell>
+                  ))}
                 </TableRow>
               </TableHead>
               <TableBody>
                 {result
                   .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                   .map(l => (
-                    <TableRow>
+                    <TableRow hover>
                       <TableCell>{l.message}</TableCell>
                       <TableCell>{l.date}</TableCell>
                       <TableCell>{l.id}</TableCell>
