@@ -94,7 +94,7 @@ class App extends PureComponent {
       console.log("Deleting", this.eventFocused);
       this.calendar.removeEvents(this.eventFocused._id);
       if (this.eventFocused.id) {
-        axios.delete(`/v2/event/${this.eventFocused.id}`);
+        axios.delete(`/v2/event/${this.tFocused.id}`);
       }
       this.eventFocused = null;
       this.addCurrentEventsToActions();
@@ -136,6 +136,7 @@ class App extends PureComponent {
       droppable: true,
       eventOverlap: false,
       eventMouseover: this.eventMouseover,
+      eventDragStart: this.eventDragStart,
       viewChange: function() {
         this.calendar.rerenderEvents();
       },
@@ -156,6 +157,20 @@ class App extends PureComponent {
     };
     this.calendar = new Calendar(this.refCalendar.current, this.options);
     this.calendar.render();
+  };
+
+  eventDragStart = (event, mouseEvent) => {
+    console.log("eventDragStart", event, mouseEvent);
+    if (mouseEvent.shiftKey) {
+      /*
+      const e = {
+        start: event.start.clone(),
+        end: event.end.clone(),
+        title: "hi"
+      };
+      this.calendar.renderEvent(e);
+      */
+    }
   };
 
   eventMouseover = event => {
