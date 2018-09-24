@@ -103,7 +103,11 @@ class App extends PureComponent {
 
   onEventDelete = () => {
     axios.delete(`/v2/event/${this.state.selectedEventDetails.id}`);
-    this.calendar.removeEvents(this.state.selectedEventDetails._id);
+    this.calendar.removeEvents(
+      this.state.selectedEventDetails.id
+        ? this.state.selectedEventDetails.id
+        : this.state.selectedEventDetails._id
+    );
     this.addToLog("Delete", this.state.selectedEventDetails);
     this.setState({ selectedEvent: null });
     this.addCurrentEventsToActions();
@@ -136,7 +140,6 @@ class App extends PureComponent {
       droppable: true,
       eventOverlap: false,
       eventMouseover: this.eventMouseover,
-      eventDragStart: this.eventDragStart,
       viewChange: function() {
         this.calendar.rerenderEvents();
       },
@@ -159,20 +162,6 @@ class App extends PureComponent {
     this.calendar.render();
   };
 
-  eventDragStart = (event, mouseEvent) => {
-    console.log("eventDragStart", event, mouseEvent);
-    if (mouseEvent.shiftKey) {
-      /*
-      const e = {
-        start: event.start.clone(),
-        end: event.end.clone(),
-        title: "hi"
-      };
-      this.calendar.renderEvent(e);
-      */
-    }
-  };
-
   eventMouseover = event => {
     if (!this.eventFocused || this.eventFocused.id !== event.id) {
       this.eventFocused = event;
@@ -190,7 +179,7 @@ class App extends PureComponent {
       this.addToLog("Move", event);
     } else {
       revertFunc();
-      this.calendar.renderEvent({ ...event, id: null });
+      this.calendar.renderEvent({ ...event, id: null, _id: null });
       this.addCurrentEventsToActions();
     }
   };
