@@ -90,6 +90,7 @@ class App extends PureComponent {
       console.log("destroying existing calendar");
       this.calendar.destroy();
       this.actions.splice(0, this.actions.length);
+      this.setState({ aIndex: 0 });
     }
     this.setState({ loading: true });
     const self = this;
@@ -108,20 +109,21 @@ class App extends PureComponent {
       snapDuration: "00:01:00",
       height: "parent",
       droppable: true,
-      viewChange: function () {
+      eventOverlap: false,
+      viewChange: function() {
         this.calendar.rerenderEvents();
       },
       eventReceive: this.eventReceive,
-      eventClick: function (event) {
+      eventClick: function(event) {
         self.eventClick(this, event);
       },
-      eventResize: function () {
+      eventResize: function() {
         self.setState({ selectedEvent: null });
       },
       eventRender: this.eventRender,
       eventDrop: this.eventMove,
       dayClick: this.dayClick,
-      selectOverlap: function (event) {
+      selectOverlap: function(event) {
         console.log("sup");
         return true;
       }
@@ -137,7 +139,7 @@ class App extends PureComponent {
       day_of_week: event.start.isoWeekday()
     });
     this.addCurrentEventsToActions();
-    this.addToLog('Move', event);
+    this.addToLog("Move", event);
   };
 
   dayClick = event => {
@@ -166,7 +168,7 @@ class App extends PureComponent {
     let day_of_week = 0;
     event.img = `https://nfoo-server.com/wexerpreview/${
       event.sf_masterid
-      }_${event.navn.substr(0, event.navn.length - 4)}Square.jpg`;
+    }_${event.navn.substr(0, event.navn.length - 4)}Square.jpg`;
     day_of_week = event.start.isoWeekday();
     event.day_of_week = day_of_week;
 
@@ -191,7 +193,7 @@ class App extends PureComponent {
       event.durationEditable = true;
     }
     this.calendar.updateEvent(event);
-    this.addToLog('Add', event);
+    this.addToLog("Add", event);
     this.addCurrentEventsToActions();
   };
 
@@ -224,8 +226,8 @@ class App extends PureComponent {
             seperation_count: event.seperation_count,
             img: event.sf_masterid
               ? `https://nfoo-server.com/wexerpreview/${
-              event.sf_masterid
-              }_${event.navn.substr(0, event.navn.length - 4)}Square.jpg`
+                  event.sf_masterid
+                }_${event.navn.substr(0, event.navn.length - 4)}Square.jpg`
               : "https://historielaerer.dk/wp-content/plugins/wp-ulike/assets/img/no-thumbnail.png",
             duration: event.sf_varighed,
             level: event.sf_level,
@@ -284,7 +286,7 @@ class App extends PureComponent {
   onEventDelete = () => {
     axios.delete(`/v2/event/${this.state.selectedEventDetails.id}`);
     this.calendar.removeEvents(this.state.selectedEventDetails._id);
-    this.addToLog('Delete', this.state.selectedEventDetails);
+    this.addToLog("Delete", this.state.selectedEventDetails);
     this.setState({ selectedEvent: null });
     this.addCurrentEventsToActions();
   };
@@ -353,10 +355,6 @@ class App extends PureComponent {
     this.setState({ isSettingsDialogOpen: !isSettingsDialogOpen });
   };
 
-  toggleSelectPlayer = event => {
-    this.setState({ selectPlayerEl: event.target });
-  };
-
   toggleActionDialog = () => {
     this.setState({ isActionDialogOpen: !this.state.isActionDialogOpen });
   };
@@ -378,12 +376,12 @@ class App extends PureComponent {
     this.setState({ players: modifiedPlayerArr });
   };
 
-  copyHandler = () => { };
+  copyHandler = () => {};
 
   redoHandler = () => {
     const { aIndex } = this.state;
     this.calendar.removeEvents();
-    this.addToLog('Redo');
+    this.addToLog("Redo");
     this.setState({ aIndex: aIndex + 1 }, () =>
       this.calendar.addEventSource(this.actions[this.state.aIndex])
     );
@@ -394,7 +392,7 @@ class App extends PureComponent {
     console.log(aIndex);
     console.log(this.actions);
     this.calendar.removeEvents();
-    this.addToLog('Undo')
+    this.addToLog("Undo");
     this.setState({ aIndex: aIndex - 1 }, () =>
       this.calendar.addEventSource(this.actions[this.state.aIndex])
     );
@@ -424,6 +422,7 @@ class App extends PureComponent {
       e.start = e.start.isoWeekday(end);
       e.end = e.end.isoWeekday(end);
       e.day_of_week = end;
+      e.id = null;
       return e;
     });
     this.calendar.addEventSource(eventsMapped);
@@ -448,8 +447,10 @@ class App extends PureComponent {
       e.category = eventTo.sf_kategori;
       e.title = eventTo.sf_engelsktitel;
       e.video_id = eventTo.video_id;
-      e.end = e.start.clone().add(eventTo.sf_varighedsec, 'seconds');
-      e.img = `https://nfoo-server.com/wexerpreview/${eventTo.sf_masterid}_${eventTo.navn.substr(0, eventTo.navn.length - 4)}Square.jpg`;
+      e.end = e.start.clone().add(eventTo.sf_varighedsec, "seconds");
+      e.img = `https://nfoo-server.com/wexerpreview/${
+        eventTo.sf_masterid
+      }_${eventTo.navn.substr(0, eventTo.navn.length - 4)}Square.jpg`;
       e.level = eventTo.sf_level;
       e.duration = eventTo.sf_varighed;
       return e;
@@ -503,28 +504,25 @@ class App extends PureComponent {
   addToLog = async (message, event) => {
     const msg = {
       message,
-      date: moment().format('YYYY-MM-DD HH:mm:ss'),
-      id: event ? event.id : '--',
-      video_id: event ? event.video_id : '--',
-      start: event ? event.start.format('YYYY-MM-DD HH:mm:ss') : '--'
-    }
+      date: moment().format("YYYY-MM-DD HH:mm:ss"),
+      id: event ? event.id : "--",
+      video_id: event ? event.video_id : "--",
+      start: event ? event.start.format("YYYY-MM-DD HH:mm:ss") : "--"
+    };
     const log = [...this.state.log, msg];
     if (!this.state.logId) {
       const result = await axios.post(`/v2/event/logs`, log);
       this.setState({ logId: result.data });
-    }
-    else {
+    } else {
       axios.put(`/v2/event/logs/${this.state.logId}`, log);
     }
     this.setState({ log });
-  }
+  };
 
   toggleLog = () => {
     this.toggleActionDialog();
     this.setState({ isLogOpen: !this.state.isLogOpen });
-  }
-
-
+  };
 
   render() {
     const {
@@ -663,8 +661,8 @@ class App extends PureComponent {
                     ) : selectedEventDetails.level === "Intermediate" ? (
                       <SignalCellular2Bar />
                     ) : (
-                          <SignalCellular0Bar />
-                        )}
+                      <SignalCellular0Bar />
+                    )}
                   </Avatar>
                   <ListItemText primary={selectedEventDetails.level} />
                 </ListItem>
@@ -723,7 +721,9 @@ class App extends PureComponent {
           }
         />
         <LoadingModal show={this.state.loading} />
-        {isLogOpen && <Log log={log} show={isLogOpen} toggleLog={this.toggleLog} />}
+        {isLogOpen && (
+          <Log log={log} show={isLogOpen} toggleLog={this.toggleLog} />
+        )}
       </div>
     );
   }

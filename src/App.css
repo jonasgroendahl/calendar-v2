@@ -71,6 +71,11 @@
   overflow-y: scroll;
 }
 
+.table-wrapper {
+  overflow-x: auto;
+  width: 100%;
+}
+
 @media (max-width: 600px) {
   #leftdrawer > div {
     position: static;
