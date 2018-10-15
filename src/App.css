@@ -22,73 +22,14 @@
   }
 }
 
-.App {
-  text-align: center;
-}
-
-.test {
-  height: calc(100vh - 272px);
-  overflow: auto;
-}
-
 .loading-modal .MuiPaper-root-12 {
   animation: 2s ringing infinite;
-}
-
-.App-header {
-  background-color: #222;
-  padding: 20px;
-  color: white;
-}
-
-.App-title {
-  font-size: 1.5em;
-}
-
-.App-intro {
-  font-size: large;
-}
-
-.calendar-container {
-  height: calc(100vh - 120px);
-  margin: 0 auto;
-  padding: 10px;
-  transition: margin 225ms cubic-bezier(0, 0, 0.2, 1) 0ms;
-}
-
-.calendar-picker-div {
-  display: flex;
-  align-items: center;
-}
-
-.filter-text {
-  color: gray;
-  font-size: 0.8rem;
-}
-
-.rules-container {
-  height: calc(100vh - 420px);
-  overflow-y: scroll;
-}
-
-.table-wrapper {
-  overflow-x: auto;
-  width: 100%;
-}
-
-.keybinds-list > * {
-  margin: 5px 0;
 }
 
 @media (max-width: 600px) {
   #leftdrawer > div {
     position: static;
     width: auto !important;
-  }
-  .calendar-container {
-    margin-left: 0 !important;
-    height: auto;
-    min-height: 100vh;
   }
   #toolbar {
     flex-flow: row wrap;

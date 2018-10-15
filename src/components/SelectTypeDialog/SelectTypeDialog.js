@@ -75,6 +75,7 @@ class SelectTypeDialog extends PureComponent {
               variant="outlined"
               color="secondary"
               onClick={() => this.props.selectType("advanced")}
+              disabled
             >
               Select advanced
             </Button>

@@ -1,7 +1,6 @@
 import React, { PureComponent } from "react";
 import axios from "./axios";
 import "./App.css";
-import "./Calendar.css";
 import "fullcalendar/dist/fullcalendar.min.css";
 import { Calendar, moment } from "fullcalendar";
 import {
@@ -45,6 +44,45 @@ import SettingsDialog from "./components/SettingsDialog/SettingsDialog";
 import ActionDialog from "./components/ActionDialog/ActionDialog";
 import LoadingModal from "./components/Loading/Loading";
 import Log from "./components/LogComponent/Log";
+import styled from "styled-components";
+
+const CalendarContainer = styled.div`
+  height: calc(100vh - 120px);
+  margin: 0 auto;
+  padding: 10px;
+  transition: margin 225ms cubic-bezier(0, 0, 0.2, 1) 0ms;
+
+  @media (max-width: 600px) {
+    margin-left: 0 !important;
+    height: auto;
+    min-height: 100vh;
+  }
+`;
+
+const CalendarDiv = styled.div`
+  .fc-event {
+    padding: 3px;
+    background: black;
+    border-color: black;
+  }
+
+  .fc-event .fc-bg {
+    opacity: 0;
+  }
+
+  .fc-title {
+    background: black;
+    width: fit-content;
+    font-family: monospace;
+    font-size: 12px;
+  }
+
+  .fc-event .fc-time {
+    background: cornflowerblue;
+    width: fit-content;
+    font-family: monospace;
+  }
+`;
 
 class App extends PureComponent {
   constructor(props) {
@@ -154,10 +192,10 @@ class App extends PureComponent {
       eventDrop: this.eventDrop,
       dayClick: this.dayClick,
       selectOverlap: function(event) {
-        console.log("sup");
         return true;
       }
     };
+    console.log("calendar?", this.refCalendar);
     this.calendar = new Calendar(this.refCalendar.current, this.options);
     this.calendar.render();
   };
@@ -591,7 +629,7 @@ class App extends PureComponent {
           deleteRule={this.deleteRule}
           calendar={this.calendar}
         />
-        <div
+        <CalendarContainer
           className="calendar-container"
           style={{ marginLeft: isDrawerOpen ? "var(--calendarGutter)" : 30 }}
         >
@@ -656,8 +694,8 @@ class App extends PureComponent {
               </div>
             </Toolbar>
           </AppBar>
-          <div id="calendar" ref={this.refCalendar} />
-        </div>
+          <CalendarDiv id="calendar" innerRef={this.refCalendar} />
+        </CalendarContainer>
         <Popover
           anchorEl={selectedEvent ? selectedEvent : null}
           open={Boolean(selectedEvent)}

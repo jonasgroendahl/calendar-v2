@@ -43,6 +43,22 @@ import {
 } from "@material-ui/icons";
 import axios from "./../../axios";
 import dragula from "fullcalendar/dist/dragula.min.js";
+import styled from "styled-components";
+
+const ClassWrapper = styled.div`
+  height: calc(100vh - 272px);
+  overflow: auto;
+`;
+
+const LeftDrawerTopBar = styled.div`
+  display: flex;
+  justify-content: center;
+`;
+
+const RulesContainer = styled.div`
+  height: calc(100vh - 420px);
+  overflow-y: scroll;
+`;
 
 export default class LeftDrawer extends PureComponent {
   state = {
@@ -52,24 +68,8 @@ export default class LeftDrawer extends PureComponent {
     },
     content: [],
     search: "",
-    matches: 12,
+    matches: 15,
     eventType: 3,
-    levels: [
-      { value: "None", text: "None" },
-      { value: "For everyone", text: "For everyone" },
-      { value: "Beginner", text: "Beginner" },
-      { value: "Intermediate", text: "Intermediate" },
-      { value: "Advanced", text: "Advanced" }
-    ],
-    categories: [
-      { value: "None", text: "None" },
-      { value: "Weight loss and healthy heart (Cardio)", text: "Cardio" },
-      { value: "D'stress and relax (Mind-body)", text: "Mind Body" },
-      { value: "Kids (Kids)", text: "Kids" },
-      { value: "Senior (Senior)", text: "Senior" },
-      { value: "Cycling (Cycling)", text: "Cycling" },
-      { value: "Strong and firm(Conditioning)", text: "Conditioning" }
-    ],
     isShowingFilters: false,
     showEventType: 0,
     replacing: {
@@ -87,28 +87,13 @@ export default class LeftDrawer extends PureComponent {
 
   async componentDidMount() {
     const content = await axios.get("/v2/content");
-    /*
-    const finalContent = [
-      {
-        indslagid: 9999,
-        sf_engelsktitel: "Disable On-Demand",
-        sf_kategori: "",
-        sf_level: "",
-        sf_varighed: "00:30:00",
-        indslagtypeid: 3,
-        navn: "ondemand.mp4",
-        sf_masterid: 9999
-      },
-      ...content.data
-    ];
-    */
     this.setState({ content: content.data });
   }
 
   componentDidUpdate(prevProps, prevState) {
     if (prevState.content.length === 0 && this.state.content.length > 0) {
       console.log("Content was added, making them draggable");
-      const draggableEvents = document.querySelector(".test");
+      const draggableEvents = document.querySelector(".ClassWrapper");
       dragula([draggableEvents], { copy: true });
       draggableEvents.addEventListener("scroll", event => {
         if (
@@ -274,18 +259,33 @@ export default class LeftDrawer extends PureComponent {
     const {
       search,
       filters,
-      levels,
       matches,
       eventType,
       content,
       isShowingFilters,
-      categories,
       showEventType,
       replacing,
       anchorElCalendar,
       view,
       rule
     } = this.state;
+
+    const levels = [
+      { value: "None", text: "None" },
+      { value: "For everyone", text: "For everyone" },
+      { value: "Beginner", text: "Beginner" },
+      { value: "Intermediate", text: "Intermediate" },
+      { value: "Advanced", text: "Advanced" }
+    ];
+    const categories = [
+      { value: "None", text: "None" },
+      { value: "Weight loss and healthy heart (Cardio)", text: "Cardio" },
+      { value: "D'stress and relax (Mind-body)", text: "Mind Body" },
+      { value: "Kids (Kids)", text: "Kids" },
+      { value: "Senior (Senior)", text: "Senior" },
+      { value: "Cycling (Cycling)", text: "Cycling" },
+      { value: "Strong and firm(Conditioning)", text: "Conditioning" }
+    ];
 
     let localMatches = 0;
     let classes = [];
@@ -431,7 +431,7 @@ export default class LeftDrawer extends PureComponent {
               </Button>
             </div>
           </ListItem>
-          <div className="rules-container">
+          <RulesContainer>
             {this.props.rules.map((rule, index) => (
               <ListItem>
                 <ListItemText secondary={`Rule no. ${index}`}>
@@ -444,7 +444,7 @@ export default class LeftDrawer extends PureComponent {
                 </ListItemSecondaryAction>
               </ListItem>
             ))}
-          </div>
+          </RulesContainer>
         </Fragment>
       );
     }
@@ -471,7 +471,7 @@ export default class LeftDrawer extends PureComponent {
         open={this.props.show}
         PaperProps={{ style: { width: 290 } }}
       >
-        <div className="flex center">
+        <LeftDrawerTopBar>
           <Tooltip
             title={
               this.props.calendars.find(
@@ -538,7 +538,7 @@ export default class LeftDrawer extends PureComponent {
           <IconButton onClick={this.props.toggleDrawerHandler}>
             <ChevronRight />
           </IconButton>
-        </div>
+        </LeftDrawerTopBar>
         <Divider />
         <List style={{ paddingTop: 0 }}>
           <ListItem style={{ paddingTop: 3 }}>
@@ -627,7 +627,7 @@ export default class LeftDrawer extends PureComponent {
               {view === "CLASS_OVERVIEW" ? <Receipt /> : <KeyboardBackspace />}
             </IconButton>
           </ListItem>
-          <div className="test flex column">{classes}</div>
+          <ClassWrapper className="ClassWrapper">{classes}</ClassWrapper>
           <BottomNavigation
             value={showEventType}
             onChange={this.onEventTypeChange}

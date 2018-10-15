@@ -14,18 +14,14 @@ import {
   Chip,
   Avatar
 } from "@material-ui/core";
+import styled from "styled-components";
+
+const StyledChip = styled(Chip)`
+  margin: 5px 0;
+`;
 
 export default class ActionDialog extends PureComponent {
   state = {
-    days: [
-      { value: 1, text: "Monday" },
-      { value: 2, text: "Tuesday" },
-      { value: 3, text: "Wednesday" },
-      { value: 4, text: "Thursday" },
-      { value: 5, text: "Friday" },
-      { value: 6, text: "Saturday" },
-      { value: 7, text: "Sunday" }
-    ],
     copyOneDay: {
       start: 1,
       end: 2
@@ -43,7 +39,17 @@ export default class ActionDialog extends PureComponent {
   };
 
   render() {
-    const { days, copyOneDay } = this.state;
+    const { copyOneDay } = this.state;
+
+    const days = [
+      { value: 1, text: "Monday" },
+      { value: 2, text: "Tuesday" },
+      { value: 3, text: "Wednesday" },
+      { value: 4, text: "Thursday" },
+      { value: 5, text: "Friday" },
+      { value: 6, text: "Saturday" },
+      { value: 7, text: "Sunday" }
+    ];
 
     return (
       <Dialog open={this.props.show}>
@@ -118,12 +124,12 @@ export default class ActionDialog extends PureComponent {
                   Keybinds
                 </Grid>
                 <Grid item xs={9} className="keybinds-list">
-                  <Chip
+                  <StyledChip
                     avatar={<Avatar>S</Avatar>}
                     label="Hold shift when dragging a class to make a quick copy"
                     variant="outlined"
                   />
-                  <Chip
+                  <StyledChip
                     avatar={<Avatar>D</Avatar>}
                     label="Clicking DEL upon hovering will perform a quick delete "
                     variant="outlined"
