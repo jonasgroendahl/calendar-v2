@@ -305,10 +305,10 @@ class CalendarComponent extends PureComponent {
     };
     const { data } = await axios.post(`/v2/events`, payload);
     console.log("add bugger", data, payload);
-    this.addCurrentEventsToActions();
     const event = this.createEvent({ id: data, start: date, extendedProps: properties });
     this.addToLog("Add", event);
     this.calendar.addEvent(event);
+    this.addCurrentEventsToActions();
 
   };
 
@@ -353,7 +353,6 @@ class CalendarComponent extends PureComponent {
 
 
   createEvent = (event) => {
-    console.log(event);
     const obj = {
       id: event.id,
       title: event.title,
@@ -361,6 +360,7 @@ class CalendarComponent extends PureComponent {
       endTime: event.end ? format(event.end, 'HH:mm') : format(addSeconds(event.start, event.extendedProps.sf_varighedsec), 'HH:mm'),
       daysOfWeek: [event.daysOfWeek !== undefined ? event.daysOfWeek : getDay(event.start)],
       startEditable: true,
+      rendering: event.extendedProps.video_id === 9999 ? 'background' : '',
       ...event.extendedProps
     }
     return obj;
