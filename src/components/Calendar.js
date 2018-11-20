@@ -135,7 +135,7 @@ class CalendarComponent extends PureComponent {
         firstDay: '0',
         slotLabelFormat: 'ampm'
       },
-      gymId: 1875
+      gymId: 3163
     };
   }
 
