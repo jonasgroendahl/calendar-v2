@@ -8,7 +8,7 @@ import {
   MenuItem,
   DialogActions,
   Button
-} from "../../../node_modules/@material-ui/core";
+} from "@material-ui/core";
 import "./CalendarDialog.css";
 
 export default class CalendarDialog extends PureComponent {
@@ -34,9 +34,8 @@ export default class CalendarDialog extends PureComponent {
               onChange={this.onChange}
               name="calendar_name"
             />
-            <p>
-              Lorem ipsum dolor, sit amet consectetur adipisicing elit. Harum,
-              similique!
+            <p style={{ marginBottom: 0 }}>
+              Select an existing calendar below if you wish to copy the schedule otherwise leave it blank.
             </p>
             <Select
               fullWidth
@@ -54,15 +53,12 @@ export default class CalendarDialog extends PureComponent {
           </div>
         </DialogContent>
         <DialogActions>
-          <Button
-            color="primary"
-            onClick={this.props.toggleCalendarDialog}
-          >
+          <Button color="primary" onClick={this.props.toggleCalendarDialog}>
             Cancel
           </Button>
           <Button
             color="primary"
-            onClick={() => this.props.addCalendar(this.state.calendar_name)}
+            onClick={() => this.props.addCalendar(this.state.calendar_name, this.state.calendar_clone)}
           >
             Add
           </Button>

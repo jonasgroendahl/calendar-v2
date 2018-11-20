@@ -5,54 +5,93 @@ import {
   DialogContent,
   DialogActions,
   FormControlLabel,
-  Switch,
   Button,
-  IconButton
+  RadioGroup,
+  Radio,
+  FormGroup,
+  FormControl,
+  FormLabel,
+  Card,
+  CardContent,
+  Grid,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
+  Paper
 } from "@material-ui/core";
 
-import { Accessibility } from "@material-ui/icons";
+import { Accessibility, SaveAlt } from "@material-ui/icons";
 
 export default class SettingsDialog extends PureComponent {
-  state = {
-    showTooltip: false
-  };
-
   onChange = event => {
     this.setState({ [event.target.name]: event.target.checked });
   };
 
   render() {
-    const { showTooltip } = this.state;
+
     return (
       <Dialog
         open={this.props.show}
         onClose={this.props.toggleSettingsMenu}
         disableRestoreFocus
+        maxWidth={'md'}
       >
-        <DialogTitle>Lorem ipsum dolor sit amet.</DialogTitle>
+        <DialogTitle>Settings</DialogTitle>
         <DialogContent>
-          <FormControlLabel
-            control={
-              <Switch
-                checked={showTooltip}
-                name="showTooltip"
-                onChange={this.onChange}
-              />
-            }
-            label="Show tooltips"
-          />
-          <br />
-          <FormControlLabel
-            control={
-              <IconButton color="inherit" onClick={this.props.toggleTypeDialog}>
-                <Accessibility />
-              </IconButton>
-            }
-            label="Toggle simple/advanced view"
-          />
+          <Grid container spacing={16} direction='column'>
+            <Grid item>
+              <Paper elevation={2} style={{ marginTop: 5 }}>
+                <List>
+                  <ListItem button onClick={this.props.toggleTypeDialog} divider>
+                    <ListItemText primary="Simple/advanced view"></ListItemText>
+                    <ListItemIcon>
+                      <Accessibility />
+                    </ListItemIcon>
+                  </ListItem>
+                  <ListItem button onClick={this.props.exportToCSV} divider>
+                    <ListItemText primary="Export to CSV"></ListItemText>
+                    <ListItemIcon>
+                      <SaveAlt />
+                    </ListItemIcon>
+                  </ListItem>
+                  <ListItem button onClick={this.props.exportToIframe}>
+                    <ListItemText primary="Export to IFrame"></ListItemText>
+                    <ListItemIcon>
+                      <SaveAlt />
+                    </ListItemIcon>
+                  </ListItem>
+                </List>
+              </Paper>
+            </Grid>
+            <Grid item>
+              <Card>
+                <CardContent>
+                  <FormControl>
+                    <FormLabel component="legend">Start day</FormLabel>
+                    <RadioGroup value={this.props.settings.firstDay} onChange={(_, value) => this.props.handleSettingChange('firstDay', value)}>
+                      <FormControlLabel value={'1'} label="Monday" control={<Radio color="primary" />} />
+                      <FormControlLabel value={'0'} label="Sunday" control={<Radio color="primary" />} />
+                    </RadioGroup>
+                  </FormControl>
+                  <FormControl>
+                    <FormLabel component="legend">Time format</FormLabel>
+                    <RadioGroup value={this.props.settings.slotLabelFormat} onChange={(_, value) => this.props.handleSettingChange('slotLabelFormat', value)}>
+                      <FormControlLabel value="ampm" label="AM PM" control={<Radio color="primary" />} />
+                      <FormControlLabel value="24hour" label="24 hour" control={<Radio color="primary" />} />
+                    </RadioGroup>
+                  </FormControl>
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid item>
+              <Button color="primary" onClick={() => this.props.setView('01:00:00', '23:30:00')} variant="contained" style={{ marginRight: 5 }}>24 hour view</Button>
+              <Button color="primary" onClick={() => this.props.setView('03:00:00', '21:00:00')} variant="contained">3AM - 9PM</Button>
+            </Grid>
+          </Grid>
         </DialogContent>
         <DialogActions>
-          <Button color="primary" onClick={this.props.toggleSettingsMenu}>
+          <Button onClick={this.props.toggleSettingsMenu}>
             Cancel
           </Button>
         </DialogActions>

@@ -4,27 +4,28 @@ import {
   DialogTitle,
   DialogContent,
   List,
-  Select,
   ListItemText,
   MenuItem,
   ListItem,
-  Grid,
   Button,
   DialogActions,
-  Chip,
-  Avatar
+  Avatar,
+  ListItemAvatar,
+  ListItemIcon,
+  RadioGroup,
+  Radio,
+  FormControlLabel,
+  Checkbox
 } from "@material-ui/core";
-import styled from "styled-components";
-
-const StyledChip = styled(Chip)`
-  margin: 5px 0;
-`;
+import { Assignment, Clear, FindReplace, Done, Remove } from "@material-ui/icons";
 
 export default class ActionDialog extends PureComponent {
   state = {
     copyOneDay: {
-      start: 1,
-      end: 2
+      start: '1',
+      end: {
+        '2': 1
+      }
     },
     replaceAll: {
       original: 0,
@@ -48,7 +49,7 @@ export default class ActionDialog extends PureComponent {
       { value: 4, text: "Thursday" },
       { value: 5, text: "Friday" },
       { value: 6, text: "Saturday" },
-      { value: 7, text: "Sunday" }
+      { value: 0, text: "Sunday" }
     ];
 
     return (
@@ -56,86 +57,71 @@ export default class ActionDialog extends PureComponent {
         <DialogTitle>Choose an action</DialogTitle>
         <DialogContent>
           <List>
-            <Grid container>
-              <Grid item xs={8}>
-                <ListItem
-                  button
-                  onClick={() =>
-                    this.props.copy(copyOneDay.start, copyOneDay.end)
-                  }
-                >
-                  <ListItemText secondary="Select start and end day of the week. This will clear classes on the end day.">
-                    Copy 1 day.
-                  </ListItemText>
-                </ListItem>
-              </Grid>
-              <Grid item xs={4}>
-                <Select
-                  value={copyOneDay.start}
-                  onChange={this.handleChange}
-                  name="start"
-                  fullWidth
-                >
-                  {days.map(
-                    day =>
-                      copyOneDay.end !== day.value && (
-                        <MenuItem value={day.value} key={`start_${day.value}`}>
-                          {day.text}
-                        </MenuItem>
-                      )
-                  )}
-                </Select>
-                <Select
-                  value={copyOneDay.end}
-                  onChange={this.handleChange}
-                  name="end"
-                  fullWidth
-                  style={{ marginTop: 5 }}
-                >
-                  {days.map(
-                    day =>
-                      copyOneDay.start !== day.value && (
-                        <MenuItem value={day.value} key={`end_${day.value}`}>
-                          {day.text}
-                        </MenuItem>
-                      )
-                  )}
-                </Select>
-              </Grid>
-            </Grid>
+            <ListItem
+              button
+              onClick={() =>
+                this.props.copy(copyOneDay.start, copyOneDay.end)
+              }
+            >
+              <ListItemText secondary="Select start and end days of the week. This will clear classes on the end days.">
+                Copy 1 day.
+              </ListItemText>
+            </ListItem>
+            <ListItem style={{ justifyContent: 'space-evenly' }}>
+              <RadioGroup value={copyOneDay.start} onChange={(e, value) => {
+                const copyOneDay = { ...this.state.copyOneDay };
+                copyOneDay.start = value;
+                copyOneDay.end[value] = 0;
+                this.setState({ copyOneDay });
+              }}>
+                {days.map(
+                  day =>
+                    <FormControlLabel control={<Radio color="primary" />} value={day.value.toString()} label={day.text} />
+                )}
+              </RadioGroup>
+              <div className="flex column">
+                {days.map(
+                  day => (this.state.copyOneDay.start !== day.value.toString()) &&
+                    <FormControlLabel control={<Checkbox color="primary" checkedIcon={<Done />} name={day.value.toString()} checked={Boolean(copyOneDay.end[day.value.toString()])} onChange={(e, checked) => {
+                      const copyOneDay = { ...this.state.copyOneDay };
+                      copyOneDay.end[e.target.name] = checked;
+                      this.setState({ copyOneDay });
+                    }} />} label={day.text} />
+                )}
+              </div>
+            </ListItem>
             <ListItem button onClick={this.props.replace}>
               <ListItemText secondary="This will activate selection mode, select 2 classes in the menu to the left.">
                 Replace all instances of 1 class.
               </ListItemText>
+              <ListItemIcon><FindReplace /></ListItemIcon>
             </ListItem>
             <ListItem button onClick={this.props.delete}>
               <ListItemText secondary="This will delete all entries in the calendar.">
                 Clear calendar.
               </ListItemText>
+              <ListItemIcon><Clear /></ListItemIcon>
             </ListItem>
             <ListItem button onClick={this.props.toggleLog}>
               <ListItemText secondary="Show the log for this calendar.">
                 Show log.
               </ListItemText>
+              <ListItemIcon><Assignment /></ListItemIcon>
             </ListItem>
             <ListItem>
-              <Grid container>
-                <Grid item xs={3}>
-                  Keybinds
-                </Grid>
-                <Grid item xs={9} className="keybinds-list">
-                  <StyledChip
-                    avatar={<Avatar>S</Avatar>}
-                    label="Hold shift when dragging a class to make a quick copy"
-                    variant="outlined"
-                  />
-                  <StyledChip
-                    avatar={<Avatar>D</Avatar>}
-                    label="Clicking DEL upon hovering will perform a quick delete "
-                    variant="outlined"
-                  />
-                </Grid>
-              </Grid>
+              <ListItemText primary="Keybinds:" />
+            </ListItem>
+            <ListItem>
+              <ListItemAvatar>
+                <Avatar>S</Avatar>
+              </ListItemAvatar>
+              <ListItemText secondary="Hold shift when dragging a class to make a quick copy"></ListItemText>
+            </ListItem>
+            <ListItem>
+              <ListItemAvatar>
+                <Avatar>D</Avatar>
+              </ListItemAvatar>
+              <ListItemText secondary="Clicking DEL upon hovering will perform a quick delete"></ListItemText>
             </ListItem>
           </List>
         </DialogContent>

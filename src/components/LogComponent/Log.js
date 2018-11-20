@@ -16,7 +16,7 @@ import {
   TableSortLabel
 } from "@material-ui/core";
 import { Search } from "@material-ui/icons";
-import axios from "../../axios";
+import axios from "../../utils/api";
 import styled from "styled-components";
 
 const TableWrapper = styled.div`

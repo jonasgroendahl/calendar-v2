@@ -1,5 +1,51 @@
 :root {
-  --calendarGutter: 300px;
+  --drawerWidth: 290px;
+  --navHeight: 65px;
+  --drawerItemHover: rgba(0, 0, 0, 0.08);
+}
+
+*, *:before, *:after{
+  box-sizing: inherit;
+}
+
+.text--wrap {
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.flex {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.flex-margin > * {
+  margin: 0px 10px 10px 0px;
+}
+
+.start {
+  align-items:flex-start;
+}
+
+.column{
+  flex-direction: column;
+}
+
+.center {
+  justify-content: center;
+  align-items: center;
+}
+
+.ml-auto {
+  margin-left: auto !important;
+}
+
+.mr-auto {
+  margin-right: auto !important;
+}
+
+.mt-10 {
+  margin-top: 10px;
 }
 
 @keyframes ringing {
