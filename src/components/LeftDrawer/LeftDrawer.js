@@ -491,8 +491,8 @@ export default class LeftDrawer extends PureComponent {
                           </ListItem>
                         )
                     )}
-                    <Divider />
                   </List>
+                  <Divider />
                   <CardActions>
                     <Button
                       variant="outlined"
