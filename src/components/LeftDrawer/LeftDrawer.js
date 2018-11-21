@@ -19,8 +19,8 @@ const ClassWrapper = styled.div`
 
 const LeftDrawerTopBar = styled(ListItem)`
   display: flex !important;
-  justify-content: center !important;
-  padding: 0px !important;
+  padding: 0 20px !important;
+  justify-content: space-between !important;
 `;
 
 
@@ -420,21 +420,19 @@ export default class LeftDrawer extends PureComponent {
       >
         <List>
           <LeftDrawerTopBar>
-            <IconButton onClick={this.props.toggleDrawerHandler}>
-              <ChevronLeft />
-            </IconButton>
-            <Tooltip
-              title={
-                this.props.calendars.length > 0 ? this.props.calendars.find(
-                  cl => cl.id === this.props.selectedCalendar
-                ).name : 'Create a new calendar'
-              }
-            >
-              <IconButton onClick={this.toggleCalendarPopper} id="button">
-                <Event />
-              </IconButton>
-            </Tooltip>
             <span className="text--wrap" style={{ maxWidth: '50%' }}>{calendarText}</span>
+            <div className="ml-auto">
+              <Tooltip
+                title={'Choose a calendar'}
+              >
+                <IconButton onClick={this.toggleCalendarPopper} id="button">
+                  <Event />
+                </IconButton>
+              </Tooltip>
+              <IconButton onClick={this.props.toggleDrawerHandler}>
+                <ChevronLeft />
+              </IconButton>
+            </div>
             <Popper
               open={Boolean(anchorElCalendar)}
               anchorEl={anchorElCalendar}
