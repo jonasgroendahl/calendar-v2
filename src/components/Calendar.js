@@ -225,10 +225,7 @@ class CalendarComponent extends PureComponent {
       eventRender: this.eventRender,
       eventDrop: this.eventDrop,
       drop: this.drop,
-      dayClick: this.dayClick,
-      selectOverlap: function (event) {
-        return true;
-      }
+      dayClick: this.dayClick
     };
     console.log("calendar?", this.refCalendar);
     this.calendar = new Calendar(this.refCalendar.current, this.options);
@@ -236,8 +233,10 @@ class CalendarComponent extends PureComponent {
   };
 
   eventOverlap = (stillEvent, movingEvent) => {
-    console.log("eventOverlap");
-    return false;
+    if (stillEvent.rendering != 'background') {
+      return false;
+    }
+    return true;
   }
 
   eventMouseEnter = ({ event }) => {
@@ -308,9 +307,11 @@ class CalendarComponent extends PureComponent {
   drop = async ({ date, draggedEl }) => {
     console.log(draggedEl, date, draggedEl.dataset.event);
     const properties = JSON.parse(draggedEl.dataset.event);
+
+    // Avoid overlap
     const events = this.calendar.getEvents();
     for (let e of events) {
-      if (date > e.start && date < e.end) {
+      if (date > e.start && date < e.end && e.rendering !== 'background') {
         return;
       }
     }
