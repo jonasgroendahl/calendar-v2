@@ -41,7 +41,7 @@ export default class SettingsDialog extends PureComponent {
           <Grid container spacing={16} direction='column'>
             <Grid item>
               <Paper elevation={2} style={{ marginTop: 5 }}>
-                <List>
+                <List disablePadding>
                   <ListItem button onClick={this.props.toggleTypeDialog} divider>
                     <ListItemText primary="Simple/advanced view"></ListItemText>
                     <ListItemIcon>

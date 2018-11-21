@@ -420,7 +420,7 @@ export default class LeftDrawer extends PureComponent {
       >
         <List>
           <LeftDrawerTopBar>
-            <span className="text--wrap" style={{ maxWidth: '50%' }}>{calendarText}</span>
+            <span className="text--wrap" style={{ maxWidth: '60%', textTransform: 'uppercase' }}>{calendarText}</span>
             <div className="ml-auto">
               <Tooltip
                 title={'Choose a calendar'}
@@ -652,8 +652,8 @@ export default class LeftDrawer extends PureComponent {
               <Fragment>
                 <ExpansionPanel elevation={0}>
                   <ExpansionPanelSummary expandIcon={<ExpandMore />}>
-                    <div className="flex">
-                      <Tooltip title="RULE: Disable Ondemand allows you to select timeframes where users may not be able to start OnDemand classes">
+                    <div className="flex center">
+                      <Tooltip title="Rule: Disable OnDemand allows you to select timeframes where users may not be able to start OnDemand classes">
                         <Info style={{ marginRight: 10 }} />
                       </Tooltip>
                       <span>Disable On Demand</span>

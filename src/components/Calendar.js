@@ -733,7 +733,9 @@ class CalendarComponent extends PureComponent {
   }
 
   exportToCSV = () => {
-    const xls = new XlsExport(this.calendar.getEvents());
+    const events = this.calendar.getEvents();
+    console.log("events", events);
+    const xls = new XlsExport(events.map(event => ({ title: event.title, start: format(event.start, 'HH:mm'), ...event.extendedProps })));
     xls.exportToCSV('export2017.csv');
     this.toggleSettingsMenu();
   }
