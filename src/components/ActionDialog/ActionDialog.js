@@ -5,7 +5,6 @@ import {
   DialogContent,
   List,
   ListItemText,
-  MenuItem,
   ListItem,
   Button,
   DialogActions,
@@ -17,7 +16,7 @@ import {
   FormControlLabel,
   Checkbox
 } from "@material-ui/core";
-import { Assignment, Clear, FindReplace, Done, Remove } from "@material-ui/icons";
+import { Assignment, Clear, FindReplace, Done } from "@material-ui/icons";
 
 export default class ActionDialog extends PureComponent {
   state = {
@@ -63,8 +62,8 @@ export default class ActionDialog extends PureComponent {
                 this.props.copy(copyOneDay.start, copyOneDay.end)
               }
             >
-              <ListItemText secondary="Select start and end days of the week. This will clear classes on the end days.">
-                Copy 1 day.
+              <ListItemText secondary="First select the day to copy events from. Next up select the day(s) you'd like copy and replace to.">
+                Perform daily copy
               </ListItemText>
             </ListItem>
             <ListItem style={{ justifyContent: 'space-evenly' }}>

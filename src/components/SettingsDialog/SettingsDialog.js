@@ -8,7 +8,6 @@ import {
   Button,
   RadioGroup,
   Radio,
-  FormGroup,
   FormControl,
   FormLabel,
   Card,
@@ -86,7 +85,7 @@ export default class SettingsDialog extends PureComponent {
             </Grid>
             <Grid item>
               <Button color="primary" onClick={() => this.props.setView('01:00:00', '23:30:00')} variant="contained" style={{ marginRight: 5 }}>24 hour view</Button>
-              <Button color="primary" onClick={() => this.props.setView('03:00:00', '21:00:00')} variant="contained">3AM - 9PM</Button>
+              <Button color="primary" onClick={() => this.props.setView('03:00:00', '21:00:00')} variant="contained">{this.props.settings.slotLabelFormat === 'ampm' ? '3AM - 9PM' : '03:00 - 21:00'}</Button>
             </Grid>
           </Grid>
         </DialogContent>

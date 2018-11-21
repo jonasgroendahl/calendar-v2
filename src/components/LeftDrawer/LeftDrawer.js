@@ -3,7 +3,7 @@ import {
   Drawer, List, IconButton, Grid, TextField, Divider, ListItem, Select, MenuItem, BottomNavigation, BottomNavigationAction, FormControl, InputLabel, Avatar, ListItemText, Card, ListItemIcon, Tooltip, Button, CardActions, Popper, ClickAwayListener, ListItemSecondaryAction, ExpansionPanel, ExpansionPanelSummary, Typography, ExpansionPanelDetails, FormControlLabel, Switch, Input, OutlinedInput
 } from "@material-ui/core";
 import {
-  Search, ChevronLeft, Videocam, Person, NotificationsActive, Clear, Event, Add, Delete, PriorityHigh, ExpandMore, Info, Star
+  Search, ChevronLeft, Videocam, Person, NotificationsActive, Clear, Event, Delete, PriorityHigh, ExpandMore, Info, Star
 } from "@material-ui/icons";
 import styled from "styled-components";
 import { Draggable } from "fullcalendar";
@@ -442,7 +442,7 @@ export default class LeftDrawer extends PureComponent {
             >
               <ClickAwayListener onClickAway={this.onClickAway}>
                 <Card elevation={5}>
-                  <List style={{ maxHeight: '40vh', overflow: 'auto' }}>
+                  <List style={{ maxHeight: '40vh', overflow: 'auto', minWidth: 270 }}>
                     {this.props.calendars.length > 0 ?
                       <ListItem>
                         <Avatar>
@@ -493,13 +493,13 @@ export default class LeftDrawer extends PureComponent {
                     )}
                   </List>
                   <Divider />
-                  <CardActions>
+                  <CardActions style={{ justifyContent: 'flex-end' }}>
                     <Button
-                      variant="outlined"
+                      variant="contained"
                       color="primary"
                       onClick={this.addCalendar}
                     >
-                      New <Add style={{ marginLeft: 5 }} />
+                      New
                     </Button>
                   </CardActions>
                 </Card>

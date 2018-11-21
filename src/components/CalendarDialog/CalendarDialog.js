@@ -53,14 +53,14 @@ export default class CalendarDialog extends PureComponent {
           </div>
         </DialogContent>
         <DialogActions>
-          <Button color="primary" onClick={this.props.toggleCalendarDialog}>
-            Cancel
-          </Button>
           <Button
             color="primary"
             onClick={() => this.props.addCalendar(this.state.calendar_name, this.state.calendar_clone)}
           >
             Add
+          </Button>
+          <Button onClick={this.props.toggleCalendarDialog}>
+            Cancel
           </Button>
         </DialogActions>
       </Dialog>

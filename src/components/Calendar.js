@@ -135,11 +135,18 @@ class CalendarComponent extends PureComponent {
         firstDay: '0',
         slotLabelFormat: 'ampm'
       },
-      gymId: 3163
+      gymId: 3163,
+      iframe: false
     };
   }
 
   async componentDidMount() {
+    const queryParams = new URLSearchParams(window.location.search);
+
+    if (queryParams.get('iframe')) {
+      await this.setState({ iframe: true });
+    }
+
     const result = await WebAPI.getCalendars(this.state.gymId);
     const calendars = result.data.map(calendar => ({ id: calendar.gruppeid, name: calendar.navn }));
     await this.setState({ calendars, selectedCalendar: calendars.length > 0 ? calendars[0].id : 41 });
@@ -239,7 +246,7 @@ class CalendarComponent extends PureComponent {
     }
   };
 
-  eventDrop = ({ event, revert, jsEvent }) => {
+  eventDrop = async ({ event, revert, jsEvent }) => {
     if (!jsEvent.shiftKey) {
       axios.put(`/v2/event_mw/${event.id ? event.id : event.def.id}`, {
         start: format(event.start, "HH:mm:ss"),
@@ -255,6 +262,16 @@ class CalendarComponent extends PureComponent {
         title: event.title,
         extendedProps: { ...event.extendedProps }
       };
+
+      const payload = {
+        start: format(event.start, "HH:mm:ss"),
+        video_id: event.extendedProps.video_id,
+        day_of_week: getDay(event.start),
+        calendar_id: this.state.selectedCalendar
+      };
+      console.log('Payload', payload);
+      const { data } = await axios.post(`/v2/events`, payload);
+      obj.id = data;
       this.calendar.addEvent(obj);
       this.addToLog("Shift key copied", event);
     }
@@ -267,7 +284,7 @@ class CalendarComponent extends PureComponent {
 
   eventClick = ({ el, event }) => {
     console.log("eventClick", el, event);
-    if (event.rendering !== 'background') {
+    if (event.rendering !== 'background' && !this.state.iframe) {
       this.setState({ selectedEvent: el, selectedEventDetails: event });
     }
   };
@@ -322,6 +339,7 @@ class CalendarComponent extends PureComponent {
       start.setHours(event.start.substr(0, 2));
       const startSetDay = setDay(start, event.day_of_week);
       const endTime = addSeconds(startSetDay, !isARule ? event.sf_varighedsec : event.duration);
+      console.log('start&end', startSetDay.getTime(), endTime.getTime());
       const end = format(endTime, "HH:mm");
       const el = {
         id: event.id,
@@ -331,7 +349,7 @@ class CalendarComponent extends PureComponent {
         endTime: end,
         sf_masterid: event.sf_masterid,
         navn: event.navn,
-        startEditable: true,
+        startEditable: !this.state.iframe ? true : false,
         sf_varighedsec: event.sf_varighedsec,
         video_id: event.indslagid,
         fav: 0,
@@ -520,7 +538,7 @@ class CalendarComponent extends PureComponent {
 
   copyOneDayHandler = (start, endObj) => {
     const end = Object.keys(endObj).reduce((a, c) => {
-      if (endObj[c]) { a.push(parseInt(c)) };
+      if (endObj[c]) { a.push(parseInt(c, 10)) };
       return a;
     }, []);
     console.log("Looking at day", start, endObj, end);
@@ -681,7 +699,7 @@ class CalendarComponent extends PureComponent {
         }
         return { hour: '2-digit', minute: '2-digit', hour12: false };
       case 'firstDay':
-        return parseInt(value);
+        return parseInt(value, 10);
       default:
         return { hour: '2-digit', minute: '2-digit', hour12: true };
     }
@@ -710,18 +728,18 @@ class CalendarComponent extends PureComponent {
   }
 
   exportToIframe = () => {
-    const xls = new XlsExport(this.calendar.getEvents());
-    xls.exportToCSV(`${format(new Date(), 'YYYY-MM-dd')}.csv`);
+    window.open(window.location.href + "?iframe=1");
+    this.toggleSettingsMenu();
   }
 
   exportToCSV = () => {
-    console.log('csv');
     const xls = new XlsExport(this.calendar.getEvents());
     xls.exportToCSV('export2017.csv');
+    this.toggleSettingsMenu();
   }
 
   deleteCalendar = async (id) => {
-    const confirm = confirm('Are you sure?');
+    const confirm = window.confirm('Are you sure?');
     if (confirm) {
       await WebAPI.deleteCalendar(id);
       const calendars = this.state.calendars.filter(cl => cl.id !== id);
@@ -757,31 +775,34 @@ class CalendarComponent extends PureComponent {
       rules,
       log,
       settings,
-      content
+      content,
+      iframe
     } = this.state;
 
     return (
       <div className="calendar-outer-wrapper">
-        <LeftDrawer
-          toggleDrawerHandler={this.toggleDrawerHandler}
-          show={isDrawerOpen}
-          isReplacing={isReplacing}
-          replace={this.replaceClassHandler}
-          toggleIsReplacing={this.toggleIsReplacing}
-          calendars={calendars}
-          selectedCalendar={selectedCalendar}
-          toggleCalendarDialog={this.toggleCalendarDialog}
-          changeCalendarHandler={this.changeCalendarHandler}
-          addRule={this.addRule}
-          rules={rules}
-          deleteRule={this.deleteRule}
-          calendar={this.calendar}
-          settings={settings}
-          content={content}
-          deleteCalendar={this.deleteCalendar}
-        />
-        <CalendarContainer className="calendar-container" style={{ marginLeft: isDrawerOpen ? 300 : 0 }}>
-          <AppBar
+        {!iframe &&
+          <LeftDrawer
+            toggleDrawerHandler={this.toggleDrawerHandler}
+            show={isDrawerOpen}
+            isReplacing={isReplacing}
+            replace={this.replaceClassHandler}
+            toggleIsReplacing={this.toggleIsReplacing}
+            calendars={calendars}
+            selectedCalendar={selectedCalendar}
+            toggleCalendarDialog={this.toggleCalendarDialog}
+            changeCalendarHandler={this.changeCalendarHandler}
+            addRule={this.addRule}
+            rules={rules}
+            deleteRule={this.deleteRule}
+            calendar={this.calendar}
+            settings={settings}
+            content={content}
+            deleteCalendar={this.deleteCalendar}
+          />
+        }
+        <CalendarContainer className="calendar-container" style={{ marginLeft: isDrawerOpen && !iframe ? 300 : 0 }}>
+          {!iframe && <AppBar
             position="static"
             style={{
               boxShadow: "none",
@@ -829,7 +850,7 @@ class CalendarComponent extends PureComponent {
                 </Tooltip>
               </div>
               <CalendarToolbar className="ml-auto">
-                <Tooltip disableFocusListener title="More settings">
+                <Tooltip disableFocusListener title="Settings">
                   <IconButton onClick={this.toggleSettingsMenu}>
                     <Build />
                   </IconButton>
@@ -858,7 +879,8 @@ class CalendarComponent extends PureComponent {
               </CalendarToolbar>
             </Toolbar>
           </AppBar>
-          <CalendarDiv id="calendar" innerRef={this.refCalendar} />
+          }
+          <CalendarDiv id="calendar" innerRef={this.refCalendar} style={{ marginTop: iframe ? 20 : 0 }} />
         </CalendarContainer>
         <Popover
           anchorEl={selectedEvent ? selectedEvent : null}
