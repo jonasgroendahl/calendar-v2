@@ -48,6 +48,14 @@
   margin-top: 10px;
 }
 
+.list-item-title{
+  background: #eee;
+}
+
+.list-item-title span {
+  color: black;
+}
+
 @keyframes ringing {
   0%,
   100% {

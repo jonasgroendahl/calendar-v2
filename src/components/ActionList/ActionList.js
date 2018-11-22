@@ -117,7 +117,7 @@ export default class ActionList extends PureComponent {
                                             Show log.
                                     </ListItemText>
                                     </ListItem>
-                                    <ListItem>
+                                    <ListItem className="list-item-title">
                                         <ListItemText primary="Keybinds:" />
                                     </ListItem>
                                     <ListItem>
