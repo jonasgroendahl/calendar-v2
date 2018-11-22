@@ -41,7 +41,7 @@ import SelectTypeDialog from "./SelectTypeDialog/SelectTypeDialog";
 import CalendarDialog from "./CalendarDialog/CalendarDialog";
 import LeftDrawer from "./LeftDrawer/LeftDrawer";
 import SettingsDialog from "./SettingsDialog/SettingsDialog";
-import ActionDialog from "./ActionDialog/ActionDialog";
+import ActionList from "./ActionList/ActionList";
 import LoadingModal from "./Loading/Loading";
 import Log from "./LogComponent/Log";
 import styled from "styled-components";
@@ -106,7 +106,6 @@ class CalendarComponent extends PureComponent {
       isTypeDialogOpen: false,
       isCalendarDialogOpen: false,
       isOpen: false,
-      isActionDialogOpen: false,
       isLogOpen: false,
       isReplacing: false,
       selectedEvent: null,
@@ -233,7 +232,7 @@ class CalendarComponent extends PureComponent {
   };
 
   eventOverlap = (stillEvent, movingEvent) => {
-    if (stillEvent.rendering != 'background') {
+    if (stillEvent.rendering !== 'background') {
       return false;
     }
     return true;
@@ -472,9 +471,11 @@ class CalendarComponent extends PureComponent {
     this.setState({ isOpen: !isOpen });
   };
 
-  toggleActionDialog = () => {
-    this.setState({ isActionDialogOpen: !this.state.isActionDialogOpen });
-  };
+
+  toggleActionList = (e) => {
+    console.log(e);
+    this.setState({ anchorMoreBtn: e ? e.target : null });
+  }
 
   selectPlayer = id => {
     const { players, selectedCalendar } = this.state;
@@ -535,6 +536,7 @@ class CalendarComponent extends PureComponent {
     this.deleteAllEvents();
     this.state.actions.push([]);
     this.setState({ aIndex: this.state.actions.length - 1 });
+    this.toggleActionList(null);
   };
 
   copyOneDayHandler = (start, endObj) => {
@@ -576,14 +578,12 @@ class CalendarComponent extends PureComponent {
       })
     })
     this.addCurrentEventsToActions();
-    this.toggleActionDialog();
+    this.toggleActionList(null);
   };
 
   toggleIsReplacing = () => {
-    this.setState({
-      isReplacing: !this.state.isReplacing,
-      isActionDialogOpen: false
-    });
+    this.setState({ isReplacing: !this.state.isReplacing });
+    this.toggleActionList(null);
   };
 
   replaceClassHandler = (fromId, eventTo) => {
@@ -673,7 +673,7 @@ class CalendarComponent extends PureComponent {
   };
 
   toggleLog = () => {
-    this.toggleActionDialog();
+    this.toggleActionList(null);
     this.setState({ isLogOpen: !this.state.isLogOpen });
   };
 
@@ -759,6 +759,11 @@ class CalendarComponent extends PureComponent {
     this.toggleSettingsMenu();
   }
 
+  clickAway = () => {
+    console.log('clickAway');
+    this.setState({ anchorMoreBtn: null });
+  }
+
 
   render() {
     const {
@@ -772,7 +777,6 @@ class CalendarComponent extends PureComponent {
       view,
       selectedCalendar,
       isCalendarDialogOpen,
-      isActionDialogOpen,
       isReplacing,
       calendars,
       rules,
@@ -847,7 +851,7 @@ class CalendarComponent extends PureComponent {
                   </div>
                 </Tooltip>
                 <Tooltip disableFocusListener title="More actions">
-                  <IconButton onClick={this.toggleActionDialog}>
+                  <IconButton onClick={this.toggleActionList}>
                     <MoreVert />
                   </IconButton>
                 </Tooltip>
@@ -965,13 +969,13 @@ class CalendarComponent extends PureComponent {
           exportToIframe={this.exportToIframe}
           setView={this.setView}
         />
-        <ActionDialog
-          show={isActionDialogOpen}
-          toggle={this.toggleActionDialog}
+        <ActionList
+          anchorEl={this.state.anchorMoreBtn}
           delete={this.deleteAllHandler}
           copy={this.copyOneDayHandler}
           replace={this.toggleIsReplacing}
           toggleLog={this.toggleLog}
+          clickAway={this.clickAway}
         />
         <Snackbar
           anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}

@@ -440,7 +440,7 @@ export default class LeftDrawer extends PureComponent {
             >
               <ClickAwayListener onClickAway={this.onClickAway}>
                 <Card elevation={5}>
-                  <List style={{ maxHeight: '40vh', overflow: 'auto', minWidth: 270 }}>
+                  <List style={{ minWidth: 270 }}>
                     {this.props.calendars.length > 0 ?
                       <ListItem>
                         <Avatar>
@@ -469,26 +469,28 @@ export default class LeftDrawer extends PureComponent {
                       </ListItem>
                     }
                     <Divider />
-                    {this.props.calendars.map(
-                      calendar =>
-                        calendar.id !== this.props.selectedCalendar && (
-                          <ListItem
-                            button
-                            onClick={() =>
-                              this.changeCalendar(calendar.id)
-                            }
-                          >
-                            <ListItemText secondary={`ID: ${calendar.id}`}>
-                              {calendar.name}
-                            </ListItemText>
-                            <ListItemSecondaryAction>
-                              <IconButton onClick={() => this.props.deleteCalendar(calendar.id)}>
-                                <Delete />
-                              </IconButton>
-                            </ListItemSecondaryAction>
-                          </ListItem>
-                        )
-                    )}
+                    <div style={{ maxHeight: '40vh', overflow: 'auto' }}>
+                      {this.props.calendars.map(
+                        calendar =>
+                          calendar.id !== this.props.selectedCalendar && (
+                            <ListItem
+                              button
+                              onClick={() =>
+                                this.changeCalendar(calendar.id)
+                              }
+                            >
+                              <ListItemText secondary={`ID: ${calendar.id}`}>
+                                {calendar.name}
+                              </ListItemText>
+                              <ListItemSecondaryAction>
+                                <IconButton onClick={() => this.props.deleteCalendar(calendar.id)}>
+                                  <Delete />
+                                </IconButton>
+                              </ListItemSecondaryAction>
+                            </ListItem>
+                          )
+                      )}
+                    </div>
                   </List>
                   <Divider />
                   <CardActions style={{ justifyContent: 'flex-end' }}>
