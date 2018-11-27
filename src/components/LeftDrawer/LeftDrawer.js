@@ -428,6 +428,7 @@ export default class LeftDrawer extends PureComponent {
             <div className="ml-auto">
               <Tooltip
                 title={'Choose a calendar'}
+                disableFocusListener
               >
                 <IconButton onClick={this.toggleCalendarPopper} id="button">
                   <Event />
