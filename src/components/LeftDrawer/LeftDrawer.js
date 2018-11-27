@@ -109,7 +109,7 @@ export default class LeftDrawer extends PureComponent {
   searchHandler = event => {
     this.setState({
       search: event.target.value,
-      matches: 10,
+      matches: 15,
       showEventType: 0,
       eventType: 3
     });
