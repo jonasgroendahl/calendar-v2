@@ -10,6 +10,7 @@ import { Draggable } from "fullcalendar";
 import { TimePicker } from "material-ui-pickers";
 import { format } from "date-fns";
 import { levels, categories } from "../static";
+import Flag from "../Flag/Flag";
 //import { Draggable } from "react-beautiful-dnd";
 
 const ClassWrapper = styled.div`
@@ -345,6 +346,9 @@ export default class LeftDrawer extends PureComponent {
               >
                 {c.sf_engelsktitel}
               </ListItemText>
+              <ListItemSecondaryAction>
+                <Flag name={c.language} />
+              </ListItemSecondaryAction>
             </ListItem>
           );
         } else if (

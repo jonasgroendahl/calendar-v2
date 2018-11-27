@@ -557,7 +557,7 @@ class CalendarComponent extends PureComponent {
       // Look for updates
       let update;
       for (let s of y) {
-        if (s.id === f.id && (JSON.stringify(s.start) !== JSON.stringify(f.start))) {
+        if (s.id === f.id && (JSON.stringify(s.start) !== JSON.stringify(f.start) || s.extendedProps.video_id !== f.extendedProps.video_id)) {
           update = s;
           break;
         }
@@ -659,21 +659,25 @@ class CalendarComponent extends PureComponent {
     this.toggleActionList(null);
   };
 
-  replaceClassHandler = (fromId, eventTo) => {
+  replaceClassHandler = async (fromId, eventTo) => {
     console.log("replaceClassHandler", fromId, eventTo);
     const events = this.calendar
       .getEvents()
       .filter(event => event.extendedProps.video_id === fromId);
 
+    let update = [];
     this.calendar.batchRendering(() => {
       events.forEach(event => {
         event.setProp("title", eventTo.sf_engelsktitel);
         event.setEnd(addSeconds(event.start, eventTo.sf_varighedsec));
-        event.setExtendedProp("video_id", eventTo.video_id);
+        event.setExtendedProp("video_id", eventTo.video_id ? eventTo.video_id : eventTo.indslagid);
         event.setExtendedProp("sf_masterid", eventTo.sf_masterid);
         event.setExtendedProp("navn", eventTo.navn);
+        update.push({ id: event.id, ...this.formatEventForDB(event.start, eventTo.video_id ? eventTo.video_id : eventTo.indslagid) });
       });
     });
+    console.log("stuff", update);
+    await WebAPI.updateMultipleEvents({ update });
     this.addCurrentEventsToActions();
   };
 
@@ -1061,7 +1065,7 @@ class CalendarComponent extends PureComponent {
             </IconButton>
           }
         />
-        <LoadingModal show={this.state.calendarLoading} />
+        <LoadingModal show={calendarLoading} />
         {isLogOpen && (
           <Log log={log} show={isLogOpen} toggleLog={this.toggleLog} />
         )}
