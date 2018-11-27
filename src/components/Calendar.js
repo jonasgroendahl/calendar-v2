@@ -127,6 +127,7 @@ class CalendarComponent extends PureComponent {
       showEventType: 0,
       aIndex: 0,
       loading: false,
+      calendarLoading: false,
       log: [],
       logId: 0,
       actions: [],
@@ -190,7 +191,7 @@ class CalendarComponent extends PureComponent {
       this.state.actions.splice(0, this.state.actions.length);
       this.setState({ aIndex: 0 });
     }
-    this.setState({ loading: true });
+    this.setState({ calendarLoading: true });
 
     const { settings } = this.state;
 
@@ -281,7 +282,7 @@ class CalendarComponent extends PureComponent {
   };
 
   eventClick = ({ el, event }) => {
-    console.log("eventClick", el, event);
+    console.log("eventClick", event.id);
     if (event.rendering !== 'background' && !this.state.iframe) {
       this.setState({ selectedEvent: el, selectedEventDetails: event });
     }
@@ -314,12 +315,7 @@ class CalendarComponent extends PureComponent {
         return;
       }
     }
-    const payload = {
-      start: format(date, "HH:mm:ss"),
-      video_id: properties.video_id,
-      day_of_week: getDay(date),
-      calendar_id: this.state.selectedCalendar
-    };
+    const payload = this.formatEventForDB(date, properties.video_id);
     const { data } = await axios.post(`/v2/events`, payload);
     console.log("add bugger", data, payload);
     const event = this.createEvent({ id: data, start: date, extendedProps: properties });
@@ -328,6 +324,15 @@ class CalendarComponent extends PureComponent {
     this.addCurrentEventsToActions();
 
   };
+
+  formatEventForDB = (date, video_id) => {
+    return {
+      start: format(date, "HH:mm:ss"),
+      video_id: video_id,
+      day_of_week: getDay(date),
+      calendar_id: this.state.selectedCalendar
+    }
+  }
 
   fetchData = async ({ start }, callback) => {
     const { data } = await WebAPI.getCalendarEvents(this.state.selectedCalendar);
@@ -364,7 +369,7 @@ class CalendarComponent extends PureComponent {
       return acc;
     }, []);
     console.log(events, rules);
-    this.setState({ loading: false, rules });
+    this.setState({ calendarLoading: false, rules });
     callback(events);
     this.addCurrentEventsToActions();
   };
@@ -525,6 +530,7 @@ class CalendarComponent extends PureComponent {
   };
 
   recoverState = index => {
+    this.compareArrs(index);
     this.calendar.batchRendering(() => {
       const events = this.calendar.getEvents();
       events.forEach(event => this.calendar.getEventById(event.id).remove());
@@ -532,53 +538,120 @@ class CalendarComponent extends PureComponent {
     });
   };
 
+
+  compareArrs = async (index) => {
+
+    this.setState({ loading: true });
+    const x = this.calendar.getEvents();
+    const y = this.state.actions[index];
+
+    const opts = {
+      add: [],
+      delete: [],
+      update: []
+    }
+
+    const ids = [];
+
+    x.filter(f => {
+      // Look for updates
+      let update;
+      for (let s of y) {
+        if (s.id === f.id && (JSON.stringify(s.start) !== JSON.stringify(f.start))) {
+          update = s;
+          break;
+        }
+      }
+
+      if (update) {
+        opts.update.push(update);
+      }
+      else if (y.every(s => s.id !== f.id)) {
+        opts.delete.push(f);
+      }
+      ids.push(f.id);
+    })
+
+    const addRemaining = y.filter(p => ids.indexOf(p.id) === -1);
+    opts.add.push(...addRemaining);
+    console.log(opts);
+    await WebAPI.updateMultipleEvents({
+      remove: opts.delete.map(event => event.id),
+      add: opts.add.map(event => ({ id: event.id, ...this.formatEventForDB(event.start, event.extendedProps.video_id) })),
+      update: opts.update.map(event => ({ id: event.id, ...this.formatEventForDB(event.start, event.extendedProps.video_id) }))
+    });
+
+    this.setState({ loading: false });
+    return opts;
+  }
+
   deleteAllHandler = () => {
-    this.deleteAllEvents();
-    this.state.actions.push([]);
-    this.setState({ aIndex: this.state.actions.length - 1 });
-    this.toggleActionList(null);
+    const confirm = window.confirm('Are you sure?');
+    if (confirm) {
+      this.deleteAllEvents();
+      this.state.actions.push([]);
+      this.setState({ aIndex: this.state.actions.length - 1 });
+      this.toggleActionList(null);
+      WebAPI.deleteAllEvents(this.state.selectedCalendar);
+    }
   };
 
-  copyOneDayHandler = (start, endObj) => {
+  copyOneDayHandler = async (start, endObj) => {
     const end = Object.keys(endObj).reduce((a, c) => {
       if (endObj[c]) { a.push(parseInt(c, 10)) };
       return a;
     }, []);
-    console.log("Looking at day", start, endObj, end);
+
+    const deleteIds = [];
     this.calendar.batchRendering(() => {
       this.calendar
         .getEvents()
         .forEach(event => {
           if (end.indexOf(event.def.recurringDef.typeData.daysOfWeek[0]) !== -1) {
+            deleteIds.push(event.id);
             event.remove();
           }
         }
         );
     });
+    if (deleteIds.length > 0) {
+      await WebAPI.updateMultipleEvents({ remove: deleteIds });
+    }
+
     const events = this.calendar
       .getEvents()
       .filter(event => console.log(event.def.recurringDef.typeData.daysOfWeek[0]) || event.def.recurringDef.typeData.daysOfWeek[0] == start);
     console.log("I wanna copy these events", events);
-    this.calendar.batchRendering(() => {
-      end.forEach(end => {
-        console.log("end!", end);
-        events.forEach(event => {
-          const newEvent = this.createEvent(
-            {
-              id: event.id,
-              start: event.start,
-              title: event.title,
-              extendedProps: event.extendedProps,
-              daysOfWeek: end
-            }
-          );
-          console.log("newEvent", newEvent);
-          this.calendar.addEvent(newEvent);
+    const eventsToAdd = [];
+
+    end.forEach(end => {
+      events.forEach(event => {
+        const newEvent = this.createEvent({
+          start: event.start,
+          title: event.title,
+          extendedProps: event.extendedProps,
+          daysOfWeek: end
         });
-      })
+        eventsToAdd.push(newEvent);
+      });
     })
+
+    const mapped = eventsToAdd.map(event => ({
+      start: event.startTime + ":00",
+      video_id: event.video_id,
+      day_of_week: event.daysOfWeek[0],
+      calendar_id: this.state.selectedCalendar
+    }));
+    const insertId = await WebAPI.updateMultipleEvents({ add: mapped });
+    this.calendar.batchRendering(() => {
+      eventsToAdd.forEach((event, index) => {
+        this.calendar.addEvent({ ...event, id: index + insertId.data });
+      });
+    });
+
     this.addCurrentEventsToActions();
     this.toggleActionList(null);
+    console.log(this.calendar.getEvents());
   };
 
   toggleIsReplacing = () => {
@@ -678,7 +751,6 @@ class CalendarComponent extends PureComponent {
   };
 
   handleSettingChange = (name, value) => {
-    console.log(name, value);
     this.setState(prevState => {
       const newState = { ...prevState };
       const settings = { ...newState.settings };
@@ -687,9 +759,8 @@ class CalendarComponent extends PureComponent {
       return newState;
     })
     const val = this.applySettingsOnCalendar(name, value);
-    console.log(name, val);
     this.calendar.setOption(name, val);
-
+    console.log(this.calendar.getEvents());
   }
 
   applySettingsOnCalendar = (name, value) => {
@@ -783,7 +854,9 @@ class CalendarComponent extends PureComponent {
       log,
       settings,
       content,
-      iframe
+      iframe,
+      loading,
+      calendarLoading
     } = this.state;
 
     return (
@@ -831,7 +904,7 @@ class CalendarComponent extends PureComponent {
                   <div>
                     <IconButton
                       onClick={this.undoHandler}
-                      disabled={this.state.aIndex === 0}
+                      disabled={this.state.aIndex === 0 || loading}
                     >
                       <Undo />
                     </IconButton>
@@ -843,7 +916,8 @@ class CalendarComponent extends PureComponent {
                       onClick={this.redoHandler}
                       disabled={
                         this.state.actions.length === 0 ||
-                        this.state.aIndex === this.state.actions.length - 1
+                        this.state.aIndex === this.state.actions.length - 1 ||
+                        loading
                       }
                     >
                       <Redo />
@@ -987,7 +1061,7 @@ class CalendarComponent extends PureComponent {
             </IconButton>
           }
         />
-        <LoadingModal show={this.state.loading} />
+        <LoadingModal show={this.state.calendarLoading} />
         {isLogOpen && (
           <Log log={log} show={isLogOpen} toggleLog={this.toggleLog} />
         )}

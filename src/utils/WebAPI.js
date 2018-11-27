@@ -20,12 +20,25 @@ const WebAPI = {
     deleteEvent: function (id) {
         return api.delete(`/v2/events/${id}`);
     },
+
     getCalendars: function (id) {
         return api.get(`/v2/gyms/${id}/calendars`);
     },
 
     deleteCalendar: function (id) {
         return api.delete(`/v2/calendars/${id}`);
+    },
+
+    updateEvent: function (id, payload) {
+        return api.put(`/v2/events/${id}`, payload);
+    },
+
+    updateMultipleEvents: function (payload) {
+        return api.post(`/v2/events/multiple`, payload);
+    },
+
+    deleteAllEvents: function (calendar_id) {
+        return api.delete(`/v2/events?calendar_id=${calendar_id}`);
     }
 }
 
