@@ -553,7 +553,7 @@ class CalendarComponent extends PureComponent {
 
     const ids = [];
 
-    x.filter(f => {
+    x.forEach(f => {
       // Look for updates
       let update;
       for (let s of y) {

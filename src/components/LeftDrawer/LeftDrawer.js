@@ -377,7 +377,7 @@ export default class LeftDrawer extends PureComponent {
         <Fragment>
           <div>
             {this.props.rules.map((rule, index) => (
-              <ListItem>
+              <ListItem key={`rule_${index}`}>
                 <ListItemText secondary={`Rule no. ${index}`}>
                   {this.mapDay(rule.daysOfWeek[0])}, {rule.startTime} -{" "}
                   {rule.endTime}
@@ -482,6 +482,7 @@ export default class LeftDrawer extends PureComponent {
                               onClick={() =>
                                 this.changeCalendar(calendar.id)
                               }
+                              key={`calendar_${calendar.id}`}
                             >
                               <ListItemText secondary={`ID: ${calendar.id}`}>
                                 {calendar.name}
