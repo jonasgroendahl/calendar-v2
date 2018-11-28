@@ -17,9 +17,6 @@ const styles = {
 };
 
 class SelectTypeDialog extends PureComponent {
-  componentDidMount() {
-    console.log(this.props);
-  }
 
   render() {
     const { classes } = this.props;

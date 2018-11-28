@@ -18,7 +18,8 @@ import {
   ListItemText,
   Avatar,
   Button,
-  Snackbar
+  Snackbar,
+  CircularProgress
 } from "@material-ui/core";
 import {
   Delete,
@@ -37,11 +38,6 @@ import {
   Favorite
 } from "@material-ui/icons";
 import IconMenu from "@material-ui/icons/Menu";
-import SelectTypeDialog from "./SelectTypeDialog/SelectTypeDialog";
-import CalendarDialog from "./CalendarDialog/CalendarDialog";
-import LeftDrawer from "./LeftDrawer/LeftDrawer";
-import SettingsDialog from "./SettingsDialog/SettingsDialog";
-import ActionList from "./ActionList/ActionList";
 import LoadingModal from "./Loading/Loading";
 import Log from "./LogComponent/Log";
 import styled from "styled-components";
@@ -50,6 +46,32 @@ import WebAPI from "../utils/WebAPI";
 import { getLanguage } from "../utils/functions"
 import { convertSecondsToHourMinute } from "../utils/functions";
 import XlsExport from 'xlsexport';
+import Loadable from "react-loadable";
+
+const LeftDrawer = Loadable({
+  loader: () => import('./LeftDrawer/LeftDrawer'),
+  loading: () => <CircularProgress />
+});
+
+const SelectTypeDialog = Loadable({
+  loader: () => import('./SelectTypeDialog/SelectTypeDialog'),
+  loading: () => <CircularProgress />
+});
+
+const CalendarDialog = Loadable({
+  loader: () => import('./CalendarDialog/CalendarDialog'),
+  loading: () => <CircularProgress />
+})
+
+const ActionList = Loadable({
+  loader: () => import('./ActionList/ActionList'),
+  loading: () => <CircularProgress />
+})
+
+const SettingsDialog = Loadable({
+  loader: () => import('./SettingsDialog/SettingsDialog'),
+  loading: () => <CircularProgress />
+})
 
 const CalendarToolbar = styled.div`
   > * {
@@ -164,7 +186,7 @@ class CalendarComponent extends PureComponent {
 
   deleteKeybind = event => {
     if (event.keyCode === 46 && this.eventFocused) {
-      console.log("Deleting", this.eventFocused);
+
       this.calendar.getEventById(this.eventFocused.id).remove();
       if (this.eventFocused.id) {
         axios.delete(`/v2/event/${this.eventFocused.id}`);
@@ -185,7 +207,7 @@ class CalendarComponent extends PureComponent {
   };
 
   createCalendar = () => {
-    console.log("createCalendar");
+
     if (this.calendar) {
       this.calendar.destroy();
       this.state.actions.splice(0, this.state.actions.length);
@@ -227,7 +249,7 @@ class CalendarComponent extends PureComponent {
       drop: this.drop,
       dayClick: this.dayClick
     };
-    console.log("calendar?", this.refCalendar);
+
     this.calendar = new Calendar(this.refCalendar.current, this.options);
     this.calendar.render();
   };
@@ -253,7 +275,7 @@ class CalendarComponent extends PureComponent {
       });
       this.addToLog("Move", event);
     } else {
-      console.log("Shift key down!", event);
+
       revert();
       const obj = {
         start: event.start,
@@ -268,7 +290,7 @@ class CalendarComponent extends PureComponent {
         day_of_week: getDay(event.start),
         calendar_id: this.state.selectedCalendar
       };
-      console.log('Payload', payload);
+
       const { data } = await axios.post(`/v2/events`, payload);
       obj.id = data;
       this.calendar.addEvent(obj);
@@ -278,11 +300,11 @@ class CalendarComponent extends PureComponent {
   };
 
   dayClick = event => {
-    console.log(event);
+
   };
 
   eventClick = ({ el, event }) => {
-    console.log("eventClick", event.id);
+
     if (event.rendering !== 'background' && !this.state.iframe) {
       this.setState({ selectedEvent: el, selectedEventDetails: event });
     }
@@ -305,19 +327,21 @@ class CalendarComponent extends PureComponent {
   };
 
   drop = async ({ date, draggedEl }) => {
-    console.log(draggedEl, date, draggedEl.dataset.event);
+
     const properties = JSON.parse(draggedEl.dataset.event);
 
     // Avoid overlap
     const events = this.calendar.getEvents();
+    const dateEnd = addSeconds(date, properties.sf_varighedsec);
+
     for (let e of events) {
-      if (date > e.start && date < e.end && e.rendering !== 'background') {
+      if (((e.start < date && dateEnd < e.end) || (dateEnd > e.start && e.start > date) || (date < e.end && e.end <= dateEnd)) && e.rendering !== 'background') {
         return;
       }
     }
     const payload = this.formatEventForDB(date, properties.video_id);
     const { data } = await axios.post(`/v2/events`, payload);
-    console.log("add bugger", data, payload);
+
     const event = this.createEvent({ id: data, start: date, extendedProps: properties });
     this.addToLog("Add", event);
     this.calendar.addEvent(event);
@@ -336,7 +360,7 @@ class CalendarComponent extends PureComponent {
 
   fetchData = async ({ start }, callback) => {
     const { data } = await WebAPI.getCalendarEvents(this.state.selectedCalendar);
-    console.log("getCalendarEvents", data);
+
     const rules = [];
     const events = data.reduce((acc, event) => {
       const isARule = event.indslagid === 9999;
@@ -344,7 +368,6 @@ class CalendarComponent extends PureComponent {
       start.setHours(event.start.substr(0, 2));
       const startSetDay = setDay(start, event.day_of_week);
       const endTime = addSeconds(startSetDay, !isARule ? event.sf_varighedsec : event.duration);
-      console.log('start&end', startSetDay.getTime(), endTime.getTime());
       const end = format(endTime, "HH:mm");
       const el = {
         id: event.id,
@@ -368,7 +391,7 @@ class CalendarComponent extends PureComponent {
       acc.push(el);
       return acc;
     }, []);
-    console.log(events, rules);
+
     this.setState({ calendarLoading: false, rules });
     callback(events);
     this.addCurrentEventsToActions();
@@ -450,7 +473,7 @@ class CalendarComponent extends PureComponent {
   };
 
   addCalendar = async (name, cloneId) => {
-    console.log("clone?", cloneId);
+
     const { calendars } = this.state;
     const { data } = await WebAPI.addCalendar({ navn: name, kundeid: this.state.gymId });
     if (cloneId) {
@@ -478,7 +501,6 @@ class CalendarComponent extends PureComponent {
 
 
   toggleActionList = (e) => {
-    console.log(e);
     this.setState({ anchorMoreBtn: e ? e.target : null });
   }
 
@@ -502,7 +524,7 @@ class CalendarComponent extends PureComponent {
   redoHandler = () => {
     this.addToLog("Redo");
     const aIndex = this.state.aIndex + 1;
-    console.log("redoHandler", aIndex);
+
     this.recoverState(aIndex);
     this.setState({ aIndex });
   };
@@ -510,7 +532,7 @@ class CalendarComponent extends PureComponent {
   undoHandler = () => {
     this.addToLog("Undo");
     const aIndex = this.state.aIndex - 1;
-    console.log("undoHandler", aIndex);
+
     this.recoverState(aIndex);
     this.setState({ aIndex });
   };
@@ -574,7 +596,7 @@ class CalendarComponent extends PureComponent {
 
     const addRemaining = y.filter(p => ids.indexOf(p.id) === -1);
     opts.add.push(...addRemaining);
-    console.log(opts);
+
     await WebAPI.updateMultipleEvents({
       remove: opts.delete.map(event => event.id),
       add: opts.add.map(event => ({ id: event.id, ...this.formatEventForDB(event.start, event.extendedProps.video_id) })),
@@ -620,8 +642,8 @@ class CalendarComponent extends PureComponent {
 
     const events = this.calendar
       .getEvents()
-      .filter(event => console.log(event.def.recurringDef.typeData.daysOfWeek[0]) || event.def.recurringDef.typeData.daysOfWeek[0] == start);
-    console.log("I wanna copy these events", events);
+      .filter(event => event.def.recurringDef.typeData.daysOfWeek[0] == start);
+
     const eventsToAdd = [];
 
     end.forEach(end => {
@@ -651,7 +673,6 @@ class CalendarComponent extends PureComponent {
 
     this.addCurrentEventsToActions();
     this.toggleActionList(null);
-    console.log(this.calendar.getEvents());
   };
 
   toggleIsReplacing = () => {
@@ -660,7 +681,7 @@ class CalendarComponent extends PureComponent {
   };
 
   replaceClassHandler = async (fromId, eventTo) => {
-    console.log("replaceClassHandler", fromId, eventTo);
+
     const events = this.calendar
       .getEvents()
       .filter(event => event.extendedProps.video_id === fromId);
@@ -676,7 +697,7 @@ class CalendarComponent extends PureComponent {
         update.push({ id: event.id, ...this.formatEventForDB(event.start, eventTo.video_id ? eventTo.video_id : eventTo.indslagid) });
       });
     });
-    console.log("stuff", update);
+
     await WebAPI.updateMultipleEvents({ update });
     this.addCurrentEventsToActions();
   };
@@ -698,7 +719,7 @@ class CalendarComponent extends PureComponent {
 
   addRule = async (day, start, end) => {
     const duration = this.calculateEndDate(start, end);
-    console.log("duration", duration);
+
     const { data } = await WebAPI.addEvent({
       start,
       video_id: 9999,
@@ -714,7 +735,7 @@ class CalendarComponent extends PureComponent {
       rendering: "background",
       id: data
     };
-    console.log("addRule", event);
+
     const rules = [...this.state.rules, { ...event }];
     this.setState({ rules });
     this.calendar.addEvent(event);
@@ -726,8 +747,8 @@ class CalendarComponent extends PureComponent {
     const id = rules[ruleIndex].id;
     const newRulesArray = rules.filter((_, index) => index !== ruleIndex);
     this.calendar.getEventById(id).remove();
-    const res = await WebAPI.deleteEvent(id);
-    console.log(res);
+    await WebAPI.deleteEvent(id);
+
     this.setState({ rules: newRulesArray });
   };
 
@@ -764,7 +785,6 @@ class CalendarComponent extends PureComponent {
     })
     const val = this.applySettingsOnCalendar(name, value);
     this.calendar.setOption(name, val);
-    console.log(this.calendar.getEvents());
   }
 
   applySettingsOnCalendar = (name, value) => {
@@ -783,7 +803,7 @@ class CalendarComponent extends PureComponent {
 
   addFav = () => {
     const { selectedEventDetails } = this.state;
-    console.log(selectedEventDetails);
+
     const events = this.calendar.getEvents().filter(e => e.extendedProps.video_id === selectedEventDetails.extendedProps.video_id);
 
     const event = events[0];
@@ -796,7 +816,7 @@ class CalendarComponent extends PureComponent {
       }
     })
 
-    console.log("Found event", events);
+
     const content = [...this.state.content];
     const index = content.findIndex(c => c.indslagid === event.extendedProps.video_id);
     content[index].fav = toggleState;
@@ -810,7 +830,7 @@ class CalendarComponent extends PureComponent {
 
   exportToCSV = () => {
     const events = this.calendar.getEvents();
-    console.log("events", events);
+
     const xls = new XlsExport(events.map(event => ({ title: event.title, start: format(event.start, 'HH:mm'), ...event.extendedProps })));
     xls.exportToCSV('export2017.csv');
     this.toggleSettingsMenu();
@@ -826,7 +846,7 @@ class CalendarComponent extends PureComponent {
   }
 
   setView = (start, end) => {
-    console.log("setView", start, end);
+
     this.calendar.batchRendering(() => {
       this.calendar.setOption("minTime", start);
       this.calendar.setOption("maxTime", end);
@@ -835,7 +855,7 @@ class CalendarComponent extends PureComponent {
   }
 
   clickAway = () => {
-    console.log('clickAway');
+
     this.setState({ anchorMoreBtn: null });
   }
 

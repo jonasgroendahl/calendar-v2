@@ -65,7 +65,6 @@ export default class LeftDrawer extends PureComponent {
 
   componentDidUpdate(prevProps, prevState) {
     if (prevProps.content.length === 0 && this.props.content.length > 0) {
-      console.log("Content was added, making them draggable");
       let providers = [];
       let languages = [];
       this.props.content.forEach(cl => {
@@ -121,7 +120,6 @@ export default class LeftDrawer extends PureComponent {
   };
 
   onEventTypeChange = (_, value) => {
-    console.log(value);
     this.setState(prevState => {
       const newState = { ...prevState };
       if (value === 0) {
@@ -159,7 +157,6 @@ export default class LeftDrawer extends PureComponent {
       if (!replacing.from && entry !== this.state.replacing.to) {
         replacing.from = entry;
       } else if (this.state.replacing.from === entry) {
-        console.log("same item");
         replacing.from = null;
       } else if (
         !this.state.replacing.to &&
@@ -193,7 +190,6 @@ export default class LeftDrawer extends PureComponent {
   };
 
   toggleCalendarPopper = event => {
-    console.log("toggleCalendarPopper", event);
     if (!this.state.anchorElCalendar) {
       this.setState({ anchorElCalendar: event.currentTarget });
     } else {
@@ -208,11 +204,7 @@ export default class LeftDrawer extends PureComponent {
 
 
   onClickAway = event => {
-    console.log(event.target !== document.querySelector("#button path"));
-    if (
-      event.target.toString() !==
-      document.querySelector("#button path").toString()
-    ) {
+    if (event.target.toString() !== document.querySelector("#button path").toString()) {
       this.setState({ anchorElCalendar: null });
     }
   };
@@ -233,13 +225,11 @@ export default class LeftDrawer extends PureComponent {
 
   addRule = () => {
     const { rule } = this.state;
-    console.log(rule);
     const newRule = {
       day: rule.day,
       start: format(rule.start, 'HH:mm'),
       end: format(rule.end, 'HH:mm')
     };
-    console.log("new rule", newRule);
     if (newRule.start && newRule.end) {
       this.props.addRule(newRule.day, newRule.start, newRule.end);
     }
@@ -293,12 +283,7 @@ export default class LeftDrawer extends PureComponent {
       let eventsToReplace;
       const isReplacing = this.props.isReplacing && !replacing.from;
       if (isReplacing) {
-        eventsToReplace = new Set(
-          this.props.calendar
-            .getEvents()
-            .map(event => event.extendedProps.video_id)
-        );
-        console.log(eventsToReplace);
+        eventsToReplace = new Set(this.props.calendar.getEvents().map(event => event.extendedProps.video_id));
       }
       classes = content.map((c, contIndex) => {
         let match =
