@@ -2,49 +2,14 @@ import React, { PureComponent } from "react";
 import axios from "../utils/api";
 import "fullcalendar/dist/fullcalendar.min.css";
 import { Calendar } from "fullcalendar";
-import {
-  IconButton,
-  Toolbar,
-  AppBar,
-  Tooltip,
-  Select,
-  MenuItem,
-  Card,
-  CardContent,
-  CardActions,
-  Popover,
-  ListItem,
-  List,
-  ListItemText,
-  Avatar,
-  Button,
-  Snackbar,
-  CircularProgress
-} from "@material-ui/core";
-import {
-  Delete,
-  ZoomIn,
-  ZoomOut,
-  Build,
-  SignalCellular1Bar,
-  SignalCellular2Bar,
-  SignalCellular0Bar,
-  Timer,
-  Title,
-  Redo,
-  Undo,
-  MoreVert,
-  Close,
-  Favorite
-} from "@material-ui/icons";
-import IconMenu from "@material-ui/icons/Menu";
+import { IconButton, Snackbar, CircularProgress } from "@material-ui/core";
+import { Close } from "@material-ui/icons";
 import LoadingModal from "./Loading/Loading";
 import Log from "./LogComponent/Log";
 import styled from "styled-components";
 import { format, addSeconds, getDay, setDay, differenceInSeconds } from "date-fns";
 import WebAPI from "../utils/WebAPI";
 import { getLanguage } from "../utils/functions"
-import { convertSecondsToHourMinute } from "../utils/functions";
 import XlsExport from 'xlsexport';
 import Loadable from "react-loadable";
 
@@ -73,11 +38,15 @@ const SettingsDialog = Loadable({
   loading: () => <CircularProgress />
 })
 
-const CalendarToolbar = styled.div`
-  > * {
-    margin-left: 5px !important;
-  }
-`;
+const EventPopover = Loadable({
+  loader: () => import('./EventPopover/EventPopover'),
+  loading: () => <CircularProgress />
+})
+
+const CalendarTopBar = Loadable({
+  loader: () => import("./CalendarTopBar/CalendarTopBar"),
+  loading: () => <CircularProgress />
+})
 
 const CalendarContainer = styled.div`
   height: calc(100vh - 80px);
@@ -195,6 +164,7 @@ class CalendarComponent extends PureComponent {
       this.addCurrentEventsToActions();
     }
   };
+
   onEventDelete = () => {
     axios.delete(`/v2/event/${this.state.selectedEventDetails.id}`);
     const event = this.calendar.getEventById(
@@ -205,6 +175,10 @@ class CalendarComponent extends PureComponent {
     this.setState({ selectedEvent: null });
     this.addCurrentEventsToActions();
   };
+
+  handleClosePopover = () => {
+    this.setState({ selectedEvent: false });
+  }
 
   createCalendar = () => {
 
@@ -250,6 +224,7 @@ class CalendarComponent extends PureComponent {
       dayClick: this.dayClick
     };
 
+    console.log(this.refCalendar.current);
     this.calendar = new Calendar(this.refCalendar.current, this.options);
     this.calendar.render();
   };
@@ -304,7 +279,6 @@ class CalendarComponent extends PureComponent {
   };
 
   eventClick = ({ el, event }) => {
-
     if (event.rendering !== 'background' && !this.state.iframe) {
       this.setState({ selectedEvent: el, selectedEventDetails: event });
     }
@@ -880,7 +854,9 @@ class CalendarComponent extends PureComponent {
       content,
       iframe,
       loading,
-      calendarLoading
+      calendarLoading,
+      actions,
+      aIndex
     } = this.state;
 
     return (
@@ -906,147 +882,30 @@ class CalendarComponent extends PureComponent {
           />
         }
         <CalendarContainer className="calendar-container" style={{ marginLeft: isDrawerOpen && !iframe ? 300 : 0 }}>
-          {!iframe && <AppBar
-            position="static"
-            style={{
-              boxShadow: "none",
-              marginBottom: 5,
-              backgroundColor: "transparent"
-            }}
-          >
-            <Toolbar id="toolbar">
-              {!isDrawerOpen && (
-                <IconButton
-                  onClick={this.toggleDrawerHandler}
-                  style={{ marginRight: 10 }}
-                >
-                  <IconMenu />
-                </IconButton>
-              )}
-              <div className="calendar-picker-div flex">
-                <Tooltip disableFocusListener title="Undo action">
-                  <div>
-                    <IconButton
-                      onClick={this.undoHandler}
-                      disabled={this.state.aIndex === 0 || loading}
-                    >
-                      <Undo />
-                    </IconButton>
-                  </div>
-                </Tooltip>
-                <Tooltip disableFocusListener title="Redo action">
-                  <div>
-                    <IconButton
-                      onClick={this.redoHandler}
-                      disabled={
-                        this.state.actions.length === 0 ||
-                        this.state.aIndex === this.state.actions.length - 1 ||
-                        loading
-                      }
-                    >
-                      <Redo />
-                    </IconButton>
-                  </div>
-                </Tooltip>
-                <Tooltip disableFocusListener title="More actions">
-                  <IconButton onClick={this.toggleActionList}>
-                    <MoreVert />
-                  </IconButton>
-                </Tooltip>
-              </div>
-              <CalendarToolbar className="ml-auto">
-                <Tooltip disableFocusListener title="Settings">
-                  <IconButton onClick={this.toggleSettingsMenu}>
-                    <Build />
-                  </IconButton>
-                </Tooltip>
-                <Tooltip disableFocusListener title="Zoom in">
-                  <IconButton onClick={() => this.zoomHandler("in")}>
-                    <ZoomIn />
-                  </IconButton>
-                </Tooltip>
-                <Tooltip disableFocusListener title="Zoom out">
-                  <IconButton onClick={() => this.zoomHandler("out")}>
-                    <ZoomOut />
-                  </IconButton>
-                </Tooltip>
-                {false ? (
-                  <Select
-                    value={view}
-                    onChange={this.viewChangeHandler}
-                    disableUnderline
-                    style={{ marginLeft: 5 }}
-                  >
-                    <MenuItem value="agendaWeek">Week</MenuItem>
-                    <MenuItem value="agendaDay">Day</MenuItem>
-                  </Select>
-                ) : null}
-              </CalendarToolbar>
-            </Toolbar>
-          </AppBar>
+          {!iframe && <CalendarTopBar
+            isDrawerOpen={isDrawerOpen}
+            aIndex={aIndex}
+            loading={loading}
+            actions={actions}
+            view={view}
+            toggleActionList={this.toggleActionList}
+            toggleSettingsMenu={this.toggleSettingsMenu}
+            zoomHandler={this.zoomHandler}
+            redoHandler={this.redoHandler}
+            undoHandler={this.undoHandler}
+            toggleDrawerHandler={this.toggleDrawerHandler} />
           }
           <CalendarDiv id="calendar" innerRef={this.refCalendar} style={{ marginTop: iframe ? 20 : 0 }} />
         </CalendarContainer>
-        <Popover
-          anchorEl={selectedEvent ? selectedEvent : null}
-          open={Boolean(selectedEvent)}
-          placement="right"
-          style={{ zIndex: 2, marginLeft: 4 }}
-          onClose={() => this.setState({ selectedEvent: false })}
-        >
-          <Card style={{ width: 300 }}>
-            <CardContent>
-              <List>
-                <ListItem>
-                  <Avatar>
-                    <Title />
-                  </Avatar>
-                  <ListItemText>{selectedEventDetails.title}{` (${selectedEventDetails.extendedProps.language}) `}</ListItemText>
-                </ListItem>
-                <ListItem>
-                  <Avatar>
-                    <Timer />
-                  </Avatar>
-                  <ListItemText
-                    primary={convertSecondsToHourMinute(selectedEventDetails.extendedProps.sf_varighedsec)}
-                  />
-                </ListItem>
-                <ListItem>
-                  <Avatar>
-                    {selectedEventDetails.level === "Beginner" ? (
-                      <SignalCellular1Bar />
-                    ) : selectedEventDetails.level === "Intermediate" ? (
-                      <SignalCellular2Bar />
-                    ) : (
-                          <SignalCellular0Bar />
-                        )}
-                  </Avatar>
-                  <ListItemText primary={selectedEventDetails.extendedProps.level} />
-                </ListItem>
-              </List>
-              {type === "advanced" && (
-                <Select
-                  disableUnderline
-                  value={selectedEventDetails.seperation_count}
-                  onChange={this.changeRecurringPattern}
-                >
-                  <MenuItem dense value={0}>
-                    Doesn't repeat
-                  </MenuItem>
-                  <MenuItem value={1}>Repeat weekly</MenuItem>
-                </Select>
-              )}
-            </CardContent>
-            <CardActions>
-              <Button onClick={this.onEventDelete} color="primary">
-                <Delete style={{ marginRight: 10 }} /> Delete
-              </Button>
-              <IconButton style={{ color: selectedEventDetails && selectedEventDetails.extendedProps.fav ? 'red' : 'initial' }} onClick={this.addFav}>
-                <Favorite />
-              </IconButton>
-            </CardActions>
-          </Card>
-        </Popover>
+
+        <EventPopover
+          selectedEventDetails={selectedEventDetails}
+          selectedEvent={selectedEvent}
+          onEventDelete={this.onEventDelete}
+          addFav={this.addFav}
+          handleClosePopover={this.handleClosePopover}
+          type={type}
+          changeRecurringPattern={this.changeRecurringPattern} />
         <SelectTypeDialog
           show={isTypeDialogOpen}
           selectType={this.selectType}
