@@ -577,6 +577,7 @@ class CalendarComponent extends PureComponent {
       update: opts.update.map(event => ({ id: event.id, ...this.formatEventForDB(event.start, event.extendedProps.video_id) }))
     });
 
+    console.log("compareArrs",opts);
     this.setState({ loading: false });
     return opts;
   }

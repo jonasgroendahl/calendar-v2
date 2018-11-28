@@ -19,6 +19,7 @@ import {
     Delete,
     SignalCellular1Bar,
     SignalCellular2Bar,
+    SignalCellular4Bar,
     SignalCellular0Bar,
     Timer,
     Title,
@@ -30,6 +31,22 @@ import { convertSecondsToHourMinute } from "../../utils/functions";
 export default function EventPopover(props) {
 
     const { selectedEvent, selectedEventDetails, type } = props;
+
+    let levelSvg = null;
+    switch (selectedEventDetails.extendedProps.level) {
+        case 'Beginner':
+            levelSvg = <SignalCellular1Bar />;
+            break;
+        case 'Intermediate':
+            levelSvg = <SignalCellular2Bar />;
+            break;
+        case 'Advanced':
+            levelSvg = <SignalCellular4Bar />;
+            break;
+        default:
+            levelSvg = <SignalCellular0Bar />;
+            break;
+    }
 
     return (
         <Popover
@@ -57,13 +74,7 @@ export default function EventPopover(props) {
                         </ListItem>
                         <ListItem>
                             <Avatar>
-                                {selectedEventDetails.level === "Beginner" ? (
-                                    <SignalCellular1Bar />
-                                ) : selectedEventDetails.level === "Intermediate" ? (
-                                    <SignalCellular2Bar />
-                                ) : (
-                                            <SignalCellular0Bar />
-                                        )}
+                                {levelSvg}
                             </Avatar>
                             <ListItemText primary={selectedEventDetails.extendedProps.level} />
                         </ListItem>
