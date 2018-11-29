@@ -118,7 +118,7 @@ export default class ActionList extends PureComponent {
                                     </ListItemText>
                                     </ListItem>
                                     <ListItem className="list-item-title">
-                                        <ListItemText primary="Keybinds:" />
+                                        <ListItemText primary="Keybinds" />
                                     </ListItem>
                                     <ListItem>
                                         <ListItemIcon>
@@ -140,7 +140,7 @@ export default class ActionList extends PureComponent {
                                         </ListItemIcon>
                                         <ListItemText primary="First select the day to copy events from." secondary="Next up select the day(s) you'd like copy and replace to." />
                                         <ListItemSecondaryAction>
-                                            <IconButton onClick={() => this.props.copy(copyOneDay.start, copyOneDay.end)}>
+                                            <IconButton onClick={() => this.props.copy(copyOneDay.start, copyOneDay.end)} disabled>
                                                 <DeleteSweep />
                                             </IconButton>
                                         </ListItemSecondaryAction>
@@ -156,12 +156,12 @@ export default class ActionList extends PureComponent {
                                             disableUnderline
                                             name="start"
                                         >
-                                            {this.days.map(day => <MenuItem value={day.value}>{day.text}</MenuItem>)}
+                                            {this.days.map(day => <MenuItem value={day.value} key={day.text}>{day.text}</MenuItem>)}
                                         </Select>
                                     </ListItem>
                                     {this.days.map(
                                         day => (this.state.copyOneDay.start !== day.value) &&
-                                            <ListItem>
+                                            <ListItem key={`li_${day.value}`}>
                                                 <ListItemText primary={day.text} />
                                                 <Checkbox color="primary" checkedIcon={<Done />} name={day.value.toString()} checked={Boolean(copyOneDay.end[day.value.toString()])} onChange={(e, checked) => {
                                                     const copyOneDay = { ...this.state.copyOneDay };

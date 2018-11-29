@@ -39,6 +39,10 @@ const WebAPI = {
 
     deleteAllEvents: function (calendar_id) {
         return api.delete(`/v2/events?calendar_id=${calendar_id}`);
+    },
+
+    getContent: function () {
+        return api.get(`/v2/content`);
     }
 }
 

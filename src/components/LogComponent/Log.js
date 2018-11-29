@@ -17,12 +17,7 @@ import {
 } from "@material-ui/core";
 import { Search } from "@material-ui/icons";
 import axios from "../../utils/api";
-import styled from "styled-components";
 
-const TableWrapper = styled.div`
-  overflow-x: auto;
-  width: 100%;
-`;
 
 export default class Log extends PureComponent {
   state = {
@@ -92,7 +87,7 @@ export default class Log extends PureComponent {
             value={search}
             style={{ float: "right" }}
           />
-          <TableWrapper>
+          <div className="class-wrapper">
             <Table>
               <TableHead>
                 <TableRow>
@@ -126,7 +121,7 @@ export default class Log extends PureComponent {
               count={result.length}
               rowsPerPageOptions={[]}
             />
-          </TableWrapper>
+          </div>
           <DialogActions>
             <Button onClick={this.props.toggleLog}>Cancel</Button>
           </DialogActions>

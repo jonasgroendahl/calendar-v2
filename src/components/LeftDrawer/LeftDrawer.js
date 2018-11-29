@@ -1,28 +1,15 @@
 import React, { PureComponent, Fragment } from "react";
 import {
-  Drawer, List, IconButton, Grid, TextField, Divider, ListItem, Select, MenuItem, BottomNavigation, BottomNavigationAction, FormControl, InputLabel, Avatar, ListItemText, Card, ListItemIcon, Tooltip, Button, CardActions, Popper, ClickAwayListener, ListItemSecondaryAction, ExpansionPanel, ExpansionPanelSummary, Typography, ExpansionPanelDetails, FormControlLabel, Switch, Input, OutlinedInput
+  Drawer, List, IconButton, Grid, TextField, Divider, ListItem, Select, MenuItem, BottomNavigation, BottomNavigationAction, FormControl, InputLabel, Avatar, ListItemText, Card, ListItemIcon, Tooltip, Button, CardActions, Popper, ClickAwayListener, ListItemSecondaryAction, ExpansionPanel, ExpansionPanelSummary, Typography, ExpansionPanelDetails, FormControlLabel, Switch, Input, OutlinedInput, Menu
 } from "@material-ui/core";
 import {
   Search, ChevronLeft, Videocam, Person, NotificationsActive, Clear, Event, Delete, PriorityHigh, ExpandMore, Info, Star
 } from "@material-ui/icons";
-import styled from "styled-components";
 import { Draggable } from "fullcalendar";
 import { TimePicker } from "material-ui-pickers";
 import { format } from "date-fns";
 import { levels, categories } from "../static";
-import Flag from "../Flag/Flag";
-//import { Draggable } from "react-beautiful-dnd";
-
-const ClassWrapper = styled.div`
-  overflow: auto;
-  height: 100%;
-`;
-
-const LeftDrawerTopBar = styled(ListItem)`
-  display: flex !important;
-  padding: 0 20px !important;
-  justify-content: space-between !important;
-`;
+import MenuIcon from "@material-ui/icons/Menu";
 
 
 
@@ -45,6 +32,7 @@ export default class LeftDrawer extends PureComponent {
       to: null
     },
     anchorElCalendar: null,
+    anchorElClass: null,
     view: "CLASS_OVERVIEW",
     rule: {
       start: new Date(),
@@ -67,7 +55,8 @@ export default class LeftDrawer extends PureComponent {
     if (prevProps.content.length === 0 && this.props.content.length > 0) {
       let providers = [];
       let languages = [];
-      this.props.content.forEach(cl => {
+      console.log(this.ClassWrapperRef.current);
+      this.props.content.forEach((cl, index) => {
         if (languages.indexOf(cl.language) === -1) {
           languages.push(cl.language);
         }
@@ -81,14 +70,33 @@ export default class LeftDrawer extends PureComponent {
         newState.languages = languages;
         return newState;
       });
+
       new Draggable(this.ClassWrapperRef.current, {
-        itemSelector: ".event"
+        itemSelector: ".event",
+        eventData: (eventEl) => {
+          console.log(eventEl.getAttribute('video_id'));
+          const eventData = this.props.content.find(cl => cl.indslagid === parseInt(eventEl.getAttribute('video_id'), 10));
+          console.log(eventData);
+          return {
+            title: eventData.sf_engelsktitel,
+            duration: eventData.sf_varighed,
+            language: eventData.language,
+            languageShort: eventData.languageShort,
+            indslagtypeid: eventData.indslagtypeid,
+            sf_kategori: eventData.sf_kategori,
+            sf_masterid: eventData.sf_masterid,
+            sf_level: eventData.sf_level,
+            navn: eventData.navn,
+            providerName: eventData.provider_name,
+            indslagid: eventData.indslagid,
+            sf_varighedsec: eventData.sf_varighedsec,
+            sf_varighed: eventData.sf_varighed
+          }
+        }
       });
+
       this.ClassWrapperRef.current.addEventListener("scroll", event => {
-        if (
-          Math.ceil(event.target.clientHeight + event.target.scrollTop) >=
-          event.target.scrollHeight
-        ) {
+        if (Math.ceil(event.target.clientHeight + event.target.scrollTop) >= event.target.scrollHeight) {
           const { matches } = this.state;
           this.setState({ matches: matches + 10 });
         }
@@ -122,6 +130,7 @@ export default class LeftDrawer extends PureComponent {
   onEventTypeChange = (_, value) => {
     this.setState(prevState => {
       const newState = { ...prevState };
+      newState.matches = 15;
       if (value === 0) {
         newState.eventType = 3;
         newState.view = 'CLASS_OVERVIEW';
@@ -236,26 +245,18 @@ export default class LeftDrawer extends PureComponent {
     this.setState({ isTimePickerVisible: false, startIsSet: false });
   };
 
+  toggle = () => {
+    this.props.toggleDrawerHandler();
+    this.setState({ matches: 15 });
+  }
+
   mapDay = day => {
-    switch (day) {
-      case 1:
-        return "Monday";
-      case 2:
-        return "Tuesday";
-      case 3:
-        return "Wednesday";
-      case 4:
-        return "Thursday";
-      case 5:
-        return "Friday";
-      case 6:
-        return "Saturday";
-      case 0:
-        return "Sunday";
-      default:
-        return "Unknown day";
-    }
+    return format(new Date().setDay(day), 'dddd');
   };
+
+  toggleClassMenu = (event) => {
+    this.setState({ anchorElClass: event ? event.target : null });
+  }
 
   render() {
     const {
@@ -271,7 +272,8 @@ export default class LeftDrawer extends PureComponent {
       rule,
       showFavorites,
       providers,
-      languages
+      languages,
+      anchorElClass
     } = this.state;
 
     const { content } = this.props;
@@ -302,15 +304,13 @@ export default class LeftDrawer extends PureComponent {
         }
         if (match && localMatches < matches) {
           localMatches++;
-          const json = `{ "title" : "${c.sf_engelsktitel}", "sf_varighedsec" : "${c.sf_varighedsec}", "duration" : "${c.sf_varighed}", "video_id" : ${
-            c.indslagid}, "sf_masterid" : ${c.sf_masterid}, "navn" : "${c.navn}", "level": "${c.sf_level}", "language": "${c.language}", "create" : false}`;
           return (
             <ListItem
               className="event"
               button
               key={c.indslagid}
               onClick={() => this.handleClick(contIndex)}
-              data-event={json}
+              video_id={c.indslagid}
             >
               <Avatar
                 src={`https://nfoo-server.com/wexerpreview/${
@@ -321,18 +321,20 @@ export default class LeftDrawer extends PureComponent {
                   )}Square.jpg`}
               />
               <ListItemText
+                primary={c.sf_engelsktitel}
                 secondary={
                   c === replacing.from
                     ? "Select a class to replace this one ..."
                     : c === replacing.to
                       ? "Replacing with this class ..."
-                      : ""
+                      : `Lang: ${c.language}`
                 }
-              >
-                {c.sf_engelsktitel}
-              </ListItemText>
+                className="list-item-text--wrap"
+              />
               <ListItemSecondaryAction>
-                <Flag name={c.language} />
+                <IconButton onClick={this.toggleClassMenu}>
+                  <MenuIcon />
+                </IconButton>
               </ListItemSecondaryAction>
             </ListItem>
           );
@@ -400,312 +402,318 @@ export default class LeftDrawer extends PureComponent {
       calendarText = calendar ? calendar.name : '';
     }
     return (
-      <Drawer
-        id="leftdrawer"
-        variant="persistent"
-        anchor="left"
-        open={this.props.show}
-        PaperProps={{ style: { width: 'var(--drawerWidth)', overflow: 'hidden' } }}
-      >
-        <List>
-          <LeftDrawerTopBar>
-            <span className="text--wrap" style={{ maxWidth: '60%', textTransform: 'uppercase' }}>{calendarText}</span>
-            <div className="ml-auto">
-              <Tooltip
-                title={'Choose a calendar'}
-                disableFocusListener
-              >
-                <IconButton onClick={this.toggleCalendarPopper} id="button">
-                  <Event />
+      <Fragment>
+        <Drawer
+          id="leftdrawer"
+          variant="persistent"
+          anchor="left"
+          open={this.props.show}
+          PaperProps={{ style: { width: 'var(--drawerWidth)', overflow: 'hidden' } }}
+        >
+          <List>
+            <div className="top-drawer-div">
+              <span className="text--wrap" style={{ maxWidth: '60%', textTransform: 'uppercase' }}>{calendarText}</span>
+              <div className="ml-auto">
+                <Tooltip
+                  title={'Choose a calendar'}
+                  disableFocusListener
+                >
+                  <IconButton onClick={this.toggleCalendarPopper} id="button">
+                    <Event />
+                  </IconButton>
+                </Tooltip>
+                <IconButton onClick={this.toggle}>
+                  <ChevronLeft />
                 </IconButton>
-              </Tooltip>
-              <IconButton onClick={this.props.toggleDrawerHandler}>
-                <ChevronLeft />
-              </IconButton>
-            </div>
-            <Popper
-              open={Boolean(anchorElCalendar)}
-              anchorEl={anchorElCalendar}
-              style={{ zIndex: 9999 }}
-            >
-              <ClickAwayListener onClickAway={this.onClickAway}>
-                <Card elevation={5}>
-                  <List style={{ minWidth: 270 }}>
-                    {this.props.calendars.length > 0 ?
-                      <ListItem>
-                        <Avatar>
-                          <Event />
-                        </Avatar>
-                        <ListItemText
-                          secondary={`ID: ${this.props.selectedCalendar}`}
-                        >
-                          {
-                            this.props.calendars.length > 0 && this.props.calendars.find(
-                              cl => cl.id === this.props.selectedCalendar
-                            ).name
-                          }
-                        </ListItemText>
-                      </ListItem>
-                      :
-                      <ListItem>
-                        <Avatar>
-                          <PriorityHigh />
-                        </Avatar>
-                        <ListItemText
-                          secondary={``}
-                        >
-                          No calendars found. Create one!
+              </div>
+              <Popper
+                open={Boolean(anchorElCalendar)}
+                anchorEl={anchorElCalendar}
+                style={{ zIndex: 9999 }}
+              >
+                <ClickAwayListener onClickAway={this.onClickAway}>
+                  <Card elevation={5}>
+                    <List style={{ minWidth: 270 }}>
+                      {this.props.calendars.length > 0 ?
+                        <ListItem>
+                          <Avatar>
+                            <Event />
+                          </Avatar>
+                          <ListItemText
+                            secondary={`ID: ${this.props.selectedCalendar}`}
+                          >
+                            {
+                              this.props.calendars.length > 0 && this.props.calendars.find(
+                                cl => cl.id === this.props.selectedCalendar
+                              ).name
+                            }
+                          </ListItemText>
+                        </ListItem>
+                        :
+                        <ListItem>
+                          <Avatar>
+                            <PriorityHigh />
+                          </Avatar>
+                          <ListItemText
+                            secondary={``}
+                          >
+                            No calendars found. Create one!
                   </ListItemText>
-                      </ListItem>
-                    }
+                        </ListItem>
+                      }
+                      <Divider />
+                      <div style={{ maxHeight: '40vh', overflow: 'auto' }}>
+                        {this.props.calendars.map(
+                          calendar =>
+                            calendar.id !== this.props.selectedCalendar && (
+                              <ListItem
+                                button
+                                onClick={() =>
+                                  this.changeCalendar(calendar.id)
+                                }
+                                key={`calendar_${calendar.id}`}
+                              >
+                                <ListItemText secondary={`ID: ${calendar.id}`}>
+                                  {calendar.name}
+                                </ListItemText>
+                                <ListItemSecondaryAction>
+                                  <IconButton onClick={() => this.props.deleteCalendar(calendar.id)}>
+                                    <Delete />
+                                  </IconButton>
+                                </ListItemSecondaryAction>
+                              </ListItem>
+                            )
+                        )}
+                      </div>
+                    </List>
                     <Divider />
-                    <div style={{ maxHeight: '40vh', overflow: 'auto' }}>
-                      {this.props.calendars.map(
-                        calendar =>
-                          calendar.id !== this.props.selectedCalendar && (
-                            <ListItem
-                              button
-                              onClick={() =>
-                                this.changeCalendar(calendar.id)
-                              }
-                              key={`calendar_${calendar.id}`}
-                            >
-                              <ListItemText secondary={`ID: ${calendar.id}`}>
-                                {calendar.name}
-                              </ListItemText>
-                              <ListItemSecondaryAction>
-                                <IconButton onClick={() => this.props.deleteCalendar(calendar.id)}>
-                                  <Delete />
-                                </IconButton>
-                              </ListItemSecondaryAction>
-                            </ListItem>
-                          )
-                      )}
-                    </div>
-                  </List>
-                  <Divider />
-                  <CardActions style={{ justifyContent: 'flex-end' }}>
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      onClick={this.addCalendar}
-                    >
-                      New
-                    </Button>
-                  </CardActions>
-                </Card>
-              </ClickAwayListener>
-            </Popper>
-          </LeftDrawerTopBar>
-        </List>
-        <Divider />
-        <List style={{ paddingTop: 0 }}>
-          <ListItem style={{ paddingTop: 3 }}>
-            <Grid container spacing={8} alignItems="flex-end" wrap={'nowrap'}>
-              <Grid item style={{ marginBottom: 8 }}>
-                <Search />
-              </Grid>
-              <Grid item>
-                <TextField
-                  label="Search"
-                  value={search}
-                  name="level"
-                  onChange={this.searchHandler}
-                  helperText={`Matches: ${localMatches} ${filterText}`}
-                />
-              </Grid>
-            </Grid>
-          </ListItem>
-          <div style={{ height: 'calc(100vh - 218px)' }}>
-            {view === 'CLASS_OVERVIEW' &&
-              <ListItem style={{ padding: 5 }}>
-                <ExpansionPanel elevation={isShowingFilters ? 1 : 0} CollapseProps={{ timeout: 300 }} style={{ width: '100%' }}>
-                  <ExpansionPanelSummary expandIcon={<ExpandMore />} expanded={isShowingFilters} onClick={() => this.setState({ isShowingFilters: !this.state.isShowingFilters })}>
-                    <Typography className={classes.heading}>Filters</Typography>
-                  </ExpansionPanelSummary>
-                  <ExpansionPanelDetails style={{ flexFlow: 'wrap row' }}>
-                    <Grid container spacing={8}>
-                      <Grid item xs={6}>
-                        <FormControl fullWidth variant="outlined" >
-                          <InputLabel htmlFor="level">Level</InputLabel>
-                          <Select
-                            onChange={this.filterChangeHandler}
-                            value={filters.level}
-                            name="level"
-                            input={<OutlinedInput
-                              labelWidth={40}
-                              id="level" />}
-                            style={{ fontSize: 12 }}
-                          >
-                            {levels.map(level => (
-                              <MenuItem
-                                value={level.value}
-                                key={`level_${level.text}`}
-                              >
-                                {level.text}
-                              </MenuItem>
-                            ))}
-                          </Select>
-                        </FormControl>
-                      </Grid>
-                      <Grid item xs={6}>
-                        <FormControl fullWidth variant="outlined">
-                          <InputLabel htmlFor="provider">Provider</InputLabel>
-                          <Select
-                            onChange={this.filterChangeHandler}
-                            value={filters.provider}
-                            name="provider"
-                            input={<OutlinedInput
-                              labelWidth={70}
-                              id="provider" />}
-                            style={{ fontSize: 12 }}
-                          >
-                            <MenuItem value="None">None</MenuItem>
-                            {providers.map(provider => (
-                              <MenuItem
-                                value={provider.value}
-                                key={`provider_${provider.text}`}
-                              >
-                                {provider.text}
-                              </MenuItem>
-                            ))}
-                          </Select>
-                        </FormControl>
-                      </Grid>
-                    </Grid>
-                    <Grid container spacing={8} style={{ marginTop: 5 }}>
-                      <Grid item xs={6}>
-                        <FormControl fullWidth variant="outlined">
-                          <InputLabel htmlFor="language">Language</InputLabel>
-                          <Select
-                            onChange={this.filterChangeHandler}
-                            value={filters.language}
-                            name="language"
-                            input={<OutlinedInput
-                              labelWidth={70}
-                              id="language" />}
-                            style={{ fontSize: 12 }}
-                          >
-                            <MenuItem value="None">None</MenuItem>
-                            {languages.map(language => (
-                              <MenuItem
-                                value={language}
-                                key={`language_${language}`}
-                              >
-                                {language}
-                              </MenuItem>
-                            ))}
-                          </Select>
-                        </FormControl>
-                      </Grid>
-                      <Grid item xs={6}>
-                        <FormControl fullWidth variant="outlined">
-                          <InputLabel htmlFor="category">Category</InputLabel>
-                          <Select
-                            onChange={this.filterChangeHandler}
-                            value={filters.category}
-                            name="category"
-                            label="Filter by category"
-                            input={<OutlinedInput
-                              labelWidth={65}
-                              id="category" />}
-                            style={{ fontSize: 12 }}
-                          >
-                            {categories.map(cat => (
-                              <MenuItem value={cat.value} key={`cat_${cat.text}`}>
-                                {cat.text}
-                              </MenuItem>
-                            ))}
-                          </Select>
-                        </FormControl>
-                      </Grid>
-                    </Grid>
-                    <Grid item className="ml-auto">
-                      <Tooltip title="Clear filters">
-                        <IconButton onClick={this.clearFilterHandler} style={{ marginRight: 5 }}>
-                          <Clear />
-                        </IconButton>
-                      </Tooltip>
-                      <FormControlLabel
-                        control={
-                          <Switch
-                            value={this.state.showFavorites}
-                            onChange={(_, checked) => this.setState({ showFavorites: checked })}
-                            color="primary"
-                          />
-                        }
-                        label="Favorites only"
-                      />
-                    </Grid>
-                  </ExpansionPanelDetails>
-                </ExpansionPanel>
-              </ListItem>
-            }
-            {view !== 'CLASS_OVERVIEW' &&
-              <Fragment>
-                <ExpansionPanel elevation={0}>
-                  <ExpansionPanelSummary expandIcon={<ExpandMore />}>
-                    <div className="flex center">
-                      <Tooltip title="Rule: Disable OnDemand allows you to select timeframes where users may not be able to start OnDemand classes">
-                        <Info style={{ marginRight: 10 }} />
-                      </Tooltip>
-                      <span>Disable On Demand</span>
-                    </div>
-                  </ExpansionPanelSummary>
-                  <ExpansionPanelDetails className="flex column">
-                    <FormControl>
-                      <InputLabel htmlFor="day">Day</InputLabel>
-                      <Select
-                        value={rule.day}
-                        disableUnderline
-                        onChange={this.handleRuleChange}
-                        name="day"
-                        input={<Input id="day" />}
+                    <CardActions style={{ justifyContent: 'flex-end' }}>
+                      <Button
+                        variant="contained"
+                        color="primary"
+                        onClick={this.addCalendar}
                       >
-                        <MenuItem value={1}>Monday</MenuItem>
-                        <MenuItem value={2}>Tuesday</MenuItem>
-                        <MenuItem value={3}>Wednesday</MenuItem>
-                        <MenuItem value={4}>Thursday</MenuItem>
-                        <MenuItem value={5}>Friday</MenuItem>
-                        <MenuItem value={6}>Saturday</MenuItem>
-                        <MenuItem value={0}>Sunday</MenuItem>
-                      </Select>
-                    </FormControl>
-                    <TimePicker label="Start time" value={rule.start} ampm={this.props.settings.slotLabelFormat === 'ampm'} onChange={(start, t, x) => {
-                      const rule = { ...this.state.rule };
-                      rule.start = start;
-                      this.setState({ rule });
-                    }} />
-                    <TimePicker label="End time" value={rule.end} ampm={this.props.settings.slotLabelFormat === 'ampm'} onChange={(end, t, x) => {
-                      const rule = { ...this.state.rule };
-                      rule.end = end;
-                      this.setState({ rule });
-                    }} />
-                    <Button color="primary" onClick={this.addRule}>
-                      Add rule
+                        New
+                    </Button>
+                    </CardActions>
+                  </Card>
+                </ClickAwayListener>
+              </Popper>
+            </div>
+          </List>
+          <Divider />
+          <List style={{ paddingTop: 0 }}>
+            <ListItem style={{ paddingTop: 3 }}>
+              <Grid container spacing={8} alignItems="flex-end" wrap={'nowrap'}>
+                <Grid item style={{ marginBottom: 8 }}>
+                  <Search />
+                </Grid>
+                <Grid item>
+                  <TextField
+                    label="Search"
+                    value={search}
+                    name="level"
+                    onChange={this.searchHandler}
+                    helperText={`Matches: ${localMatches} ${filterText}`}
+                  />
+                </Grid>
+              </Grid>
+            </ListItem>
+            <div style={{ height: 'calc(100vh - 218px)' }}>
+              {view === 'CLASS_OVERVIEW' &&
+                <ListItem style={{ padding: 5 }}>
+                  <ExpansionPanel elevation={isShowingFilters ? 1 : 0} CollapseProps={{ timeout: 300 }} style={{ width: '100%' }}>
+                    <ExpansionPanelSummary expandIcon={<ExpandMore />} expanded={isShowingFilters} onClick={() => this.setState({ isShowingFilters: !this.state.isShowingFilters })}>
+                      <Typography className={classes.heading}>Filters</Typography>
+                    </ExpansionPanelSummary>
+                    <ExpansionPanelDetails style={{ flexFlow: 'wrap row' }}>
+                      <Grid container spacing={8}>
+                        <Grid item xs={6}>
+                          <FormControl fullWidth variant="outlined" >
+                            <InputLabel htmlFor="level">Level</InputLabel>
+                            <Select
+                              onChange={this.filterChangeHandler}
+                              value={filters.level}
+                              name="level"
+                              input={<OutlinedInput
+                                labelWidth={40}
+                                id="level" />}
+                              style={{ fontSize: 12 }}
+                            >
+                              {levels.map(level => (
+                                <MenuItem
+                                  value={level.value}
+                                  key={`level_${level.text}`}
+                                >
+                                  {level.text}
+                                </MenuItem>
+                              ))}
+                            </Select>
+                          </FormControl>
+                        </Grid>
+                        <Grid item xs={6}>
+                          <FormControl fullWidth variant="outlined">
+                            <InputLabel htmlFor="provider">Provider</InputLabel>
+                            <Select
+                              onChange={this.filterChangeHandler}
+                              value={filters.provider}
+                              name="provider"
+                              input={<OutlinedInput
+                                labelWidth={70}
+                                id="provider" />}
+                              style={{ fontSize: 12 }}
+                            >
+                              <MenuItem value="None">None</MenuItem>
+                              {providers.map(provider => (
+                                <MenuItem
+                                  value={provider.value}
+                                  key={`provider_${provider.text}`}
+                                >
+                                  {provider.text}
+                                </MenuItem>
+                              ))}
+                            </Select>
+                          </FormControl>
+                        </Grid>
+                      </Grid>
+                      <Grid container spacing={8} style={{ marginTop: 5 }}>
+                        <Grid item xs={6}>
+                          <FormControl fullWidth variant="outlined">
+                            <InputLabel htmlFor="language">Language</InputLabel>
+                            <Select
+                              onChange={this.filterChangeHandler}
+                              value={filters.language}
+                              name="language"
+                              input={<OutlinedInput
+                                labelWidth={70}
+                                id="language" />}
+                              style={{ fontSize: 12 }}
+                            >
+                              <MenuItem value="None">None</MenuItem>
+                              {languages.map(language => (
+                                <MenuItem
+                                  value={language}
+                                  key={`language_${language}`}
+                                >
+                                  {language}
+                                </MenuItem>
+                              ))}
+                            </Select>
+                          </FormControl>
+                        </Grid>
+                        <Grid item xs={6}>
+                          <FormControl fullWidth variant="outlined">
+                            <InputLabel htmlFor="category">Category</InputLabel>
+                            <Select
+                              onChange={this.filterChangeHandler}
+                              value={filters.category}
+                              name="category"
+                              label="Filter by category"
+                              input={<OutlinedInput
+                                labelWidth={65}
+                                id="category" />}
+                              style={{ fontSize: 12 }}
+                            >
+                              {categories.map(cat => (
+                                <MenuItem value={cat.value} key={`cat_${cat.text}`}>
+                                  {cat.text}
+                                </MenuItem>
+                              ))}
+                            </Select>
+                          </FormControl>
+                        </Grid>
+                      </Grid>
+                      <Grid item className="ml-auto">
+                        <Tooltip title="Clear filters">
+                          <IconButton onClick={this.clearFilterHandler} style={{ marginRight: 5 }}>
+                            <Clear />
+                          </IconButton>
+                        </Tooltip>
+                        <FormControlLabel
+                          control={
+                            <Switch
+                              value={this.state.showFavorites}
+                              onChange={(_, checked) => this.setState({ showFavorites: checked })}
+                              color="primary"
+                            />
+                          }
+                          label="Favorites only"
+                        />
+                      </Grid>
+                    </ExpansionPanelDetails>
+                  </ExpansionPanel>
+                </ListItem>
+              }
+              {view !== 'CLASS_OVERVIEW' &&
+                <Fragment>
+                  <ExpansionPanel elevation={0}>
+                    <ExpansionPanelSummary expandIcon={<ExpandMore />}>
+                      <div className="flex center">
+                        <Tooltip title="Rule: Disable OnDemand allows you to select timeframes where users may not be able to start OnDemand classes">
+                          <Info style={{ marginRight: 10 }} />
+                        </Tooltip>
+                        <span>Disable On Demand</span>
+                      </div>
+                    </ExpansionPanelSummary>
+                    <ExpansionPanelDetails className="flex column">
+                      <FormControl>
+                        <InputLabel htmlFor="day">Day</InputLabel>
+                        <Select
+                          value={rule.day}
+                          disableUnderline
+                          onChange={this.handleRuleChange}
+                          name="day"
+                          input={<Input id="day" />}
+                        >
+                          <MenuItem value={1}>Monday</MenuItem>
+                          <MenuItem value={2}>Tuesday</MenuItem>
+                          <MenuItem value={3}>Wednesday</MenuItem>
+                          <MenuItem value={4}>Thursday</MenuItem>
+                          <MenuItem value={5}>Friday</MenuItem>
+                          <MenuItem value={6}>Saturday</MenuItem>
+                          <MenuItem value={0}>Sunday</MenuItem>
+                        </Select>
+                      </FormControl>
+                      <TimePicker label="Start time" value={rule.start} ampm={this.props.settings.slotLabelFormat === 'ampm'} onChange={(start, t, x) => {
+                        const rule = { ...this.state.rule };
+                        rule.start = start;
+                        this.setState({ rule });
+                      }} />
+                      <TimePicker label="End time" value={rule.end} ampm={this.props.settings.slotLabelFormat === 'ampm'} onChange={(end, t, x) => {
+                        const rule = { ...this.state.rule };
+                        rule.end = end;
+                        this.setState({ rule });
+                      }} />
+                      <Button color="primary" onClick={this.addRule}>
+                        Add rule
               </Button>
-                  </ExpansionPanelDetails>
-                </ExpansionPanel>
-              </Fragment>}
-            <ClassWrapper
-              className="ClassWrapper"
-              innerRef={this.ClassWrapperRef}
+                    </ExpansionPanelDetails>
+                  </ExpansionPanel>
+                </Fragment>}
+              <div className="class-wrapper" ref={this.ClassWrapperRef}>
+                {classes}
+              </div>
+            </div>
+            <BottomNavigation
+              value={showEventType}
+              onChange={this.onEventTypeChange}
+              showLabels
+              style={{ marginTop: 'auto' }}
             >
-              {classes}
-            </ClassWrapper>
-          </div>
-          <BottomNavigation
-            value={showEventType}
-            onChange={this.onEventTypeChange}
-            showLabels
-            style={{ marginTop: 'auto' }}
-          >
-            <BottomNavigationAction label="Classes" icon={<Videocam />} style={{ background: '#fff', height: 60 }} />
-            <BottomNavigationAction label="My classes" icon={<Person />} style={{ background: '#fff', height: 60 }} />
-            <BottomNavigationAction label="Rules" icon={<Star />} style={{ background: '#fff', height: 60 }} />
-          </BottomNavigation>
-        </List>
-      </Drawer >
+              <BottomNavigationAction label="Classes" icon={<Videocam />} style={{ background: '#fff', height: 60 }} />
+              <BottomNavigationAction label="My classes" icon={<Person />} style={{ background: '#fff', height: 60 }} />
+              <BottomNavigationAction label="Rules" icon={<Star />} style={{ background: '#fff', height: 60 }} />
+            </BottomNavigation>
+          </List>
+        </Drawer>
+        <Menu
+          anchorEl={anchorElClass}
+          open={Boolean(anchorElClass)}
+          onClose={() => this.toggleClassMenu(null)}
+        >
+          <MenuItem onClick={() => this.toggleClassMenu(null)}>View in library</MenuItem>
+        </Menu>
+      </Fragment>
     );
   }
 }

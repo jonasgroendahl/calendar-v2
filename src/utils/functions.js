@@ -29,47 +29,27 @@ export function convertSecondsToHourMinute(seconds) {
     return hDisplay + mDisplay + sDisplay;
 }
 
-export function getLanguage(obj) {
-    if (obj.sf_dansk) {
-        return 'Danish';
+export function getColor(category, type) {
+
+    if (type === 100) {
+        return '#B21016';
     }
-    else if (obj.sf_engelsk) {
-        return 'English';
-    }
-    else if (obj.sf_finsk) {
-        return 'Finnish';
-    }
-    else if (obj.sf_fransk) {
-        return 'French';
-    }
-    else if (obj.sf_graesk) {
-        return 'Greek';
-    }
-    else if (obj.sf_hollandsk) {
-        return 'Dutch';
-    }
-    else if (obj.sf_italiensk) {
-        return 'Italian';
-    }
-    else if (obj.sf_japanese) {
-        return 'Japanese';
-    }
-    else if (obj.sf_norsk) {
-        return 'Norwegian';
-    }
-    else if (obj.sf_polish) {
-        return 'Polish';
-    }
-    else if (obj.sf_spansk) {
-        return 'Spanish';
-    }
-    else if (obj.sf_svensk) {
-        return 'Swedish';
-    }
-    else if (obj.sf_tysk) {
-        return 'German';
-    }
-    else {
-        return 'Unknown language';
+
+    switch (category) {
+        case 'Weight loss and healthy heart (Cardio)':
+            return '#68BA18';
+        case "D´stress and relax (Mind-body)":
+            return "#127931";
+        case "Kids (Kids)":
+            return "#CF5400";
+        case "Senior (Senior)":
+            return "#CF5400";
+        case "Cycling (Cycling)":
+            return "#007AAE";
+        case "Strong and firm (Conditioning)":
+            return "#007364";
+        default:
+            return "yellow";
     }
 }
+

@@ -10,13 +10,7 @@ import {
     MoreVert
 } from "@material-ui/icons";
 import IconMenu from "@material-ui/icons/Menu";
-import styled from "styled-components";
 
-const CalendarToolbar = styled.div`
-  > * {
-    margin-left: 5px !important;
-  }
-`;
 
 
 
@@ -72,7 +66,7 @@ export default function CalendarTopBar(props) {
                         </IconButton>
                     </Tooltip>
                 </div>
-                <CalendarToolbar className="ml-auto">
+                <div className="ml-auto topbar-wrapper">
                     <Tooltip disableFocusListener title="Settings">
                         <IconButton onClick={props.toggleSettingsMenu}>
                             <Build />
@@ -99,7 +93,7 @@ export default function CalendarTopBar(props) {
                             <MenuItem value="agendaDay">Day</MenuItem>
                         </Select>
                     ) : null}
-                </CalendarToolbar>
+                </div>
             </Toolbar>
         </AppBar>
     )

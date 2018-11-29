@@ -1,17 +1,15 @@
 import React, { PureComponent } from "react";
-import axios from "../utils/api";
 import "fullcalendar/dist/fullcalendar.min.css";
 import { Calendar } from "fullcalendar";
 import { IconButton, Snackbar, CircularProgress } from "@material-ui/core";
 import { Close } from "@material-ui/icons";
 import LoadingModal from "./Loading/Loading";
 import Log from "./LogComponent/Log";
-import styled from "styled-components";
 import { format, addSeconds, getDay, setDay, differenceInSeconds } from "date-fns";
 import WebAPI from "../utils/WebAPI";
-import { getLanguage } from "../utils/functions"
 import XlsExport from 'xlsexport';
 import Loadable from "react-loadable";
+import { getColor } from "../utils/functions";
 
 const LeftDrawer = Loadable({
   loader: () => import('./LeftDrawer/LeftDrawer'),
@@ -47,44 +45,6 @@ const CalendarTopBar = Loadable({
   loader: () => import("./CalendarTopBar/CalendarTopBar"),
   loading: () => <CircularProgress />
 })
-
-const CalendarContainer = styled.div`
-  height: calc(100vh - 80px);
-  margin-left: 300px;
-  transition: margin 225ms cubic-bezier(0, 0, 0.2, 1) 0ms;
-
-  padding: 0 20px;
-
-  @media (max-width: 600px) {
-    margin-left: 0 !important;
-    height: auto;
-    min-height: 100vh;
-  }
-`;
-
-const CalendarDiv = styled.div`
-  .fc-event {
-    padding: 3px;
-    background: black;
-    border-color: black;
-  }
-
-  .fc-event .fc-bg {
-    opacity: 0;
-  }
-
-  .fc-title {
-    background: black;
-    width: fit-content;
-    font-size: 10px;
-  }
-
-  .fc-event .fc-time {
-    background: cornflowerblue;
-    width: fit-content;
-    font-size: 10px;
-  }
-`;
 
 class CalendarComponent extends PureComponent {
   constructor(props) {
@@ -124,7 +84,8 @@ class CalendarComponent extends PureComponent {
       actions: [],
       settings: {
         firstDay: '0',
-        slotLabelFormat: 'ampm'
+        slotLabelFormat: 'ampm',
+        showThumbnail: true
       },
       gymId: 3163,
       iframe: false
@@ -142,9 +103,9 @@ class CalendarComponent extends PureComponent {
     const calendars = result.data.map(calendar => ({ id: calendar.gruppeid, name: calendar.navn }));
     await this.setState({ calendars, selectedCalendar: calendars.length > 0 ? calendars[0].id : 41 });
     this.createCalendar();
-    const content = await axios.get("/v2/content");
-    const mappedContent = content.data.map(c => ({ ...c, language: getLanguage(c) }));
-    this.setState({ content: mappedContent });
+    const { data } = await WebAPI.getContent();
+    console.log("content", data);
+    this.setState({ content: data });
     window.addEventListener("keydown", this.deleteKeybind);
 
   }
@@ -158,7 +119,7 @@ class CalendarComponent extends PureComponent {
 
       this.calendar.getEventById(this.eventFocused.id).remove();
       if (this.eventFocused.id) {
-        axios.delete(`/v2/event/${this.eventFocused.id}`);
+        WebAPI.deleteEvent(this.eventFocused.id);
       }
       this.eventFocused = null;
       this.addCurrentEventsToActions();
@@ -166,7 +127,7 @@ class CalendarComponent extends PureComponent {
   };
 
   onEventDelete = () => {
-    axios.delete(`/v2/event/${this.state.selectedEventDetails.id}`);
+    WebAPI.deleteEvent(this.state.selectedEventDetails.id);
     const event = this.calendar.getEventById(
       this.state.selectedEventDetails.id
     );
@@ -217,6 +178,7 @@ class CalendarComponent extends PureComponent {
       viewChange: function () {
         this.calendar.rerenderEvents();
       },
+      eventReceive: this.eventReceive,
       eventClick: this.eventClick,
       eventRender: this.eventRender,
       eventDrop: this.eventDrop,
@@ -230,6 +192,7 @@ class CalendarComponent extends PureComponent {
   };
 
   eventOverlap = (stillEvent, movingEvent) => {
+    console.log("eventOverlap");
     if (stillEvent.rendering !== 'background') {
       return false;
     }
@@ -243,11 +206,9 @@ class CalendarComponent extends PureComponent {
   };
 
   eventDrop = async ({ event, revert, jsEvent }) => {
+    console.log(event);
     if (!jsEvent.shiftKey) {
-      axios.put(`/v2/event_mw/${event.id ? event.id : event.def.id}`, {
-        start: format(event.start, "HH:mm:ss"),
-        day_of_week: getDay(event.start)
-      });
+      WebAPI.updateEvent(event.id, { start: format(event.start, "HH:mm:ss"), day_of_week: getDay(event.start) });
       this.addToLog("Move", event);
     } else {
 
@@ -266,7 +227,7 @@ class CalendarComponent extends PureComponent {
         calendar_id: this.state.selectedCalendar
       };
 
-      const { data } = await axios.post(`/v2/events`, payload);
+      const { data } = await WebAPI.addEvent(payload);
       obj.id = data;
       this.calendar.addEvent(obj);
       this.addToLog("Shift key copied", event);
@@ -274,18 +235,15 @@ class CalendarComponent extends PureComponent {
     this.addCurrentEventsToActions();
   };
 
-  dayClick = event => {
-
-  };
-
   eventClick = ({ el, event }) => {
+    console.log(event);
     if (event.rendering !== 'background' && !this.state.iframe) {
       this.setState({ selectedEvent: el, selectedEventDetails: event });
     }
   };
 
   eventRender = ({ event, el }) => {
-    if (event.def.extendedProps.sf_masterid) {
+    if (event.def.extendedProps.sf_masterid && this.state.settings.showThumbnail) {
       const img = `https://nfoo-server.com/wexerpreview/${
         event.def.extendedProps.sf_masterid
         }_${event.def.extendedProps.navn.substr(
@@ -298,13 +256,38 @@ class CalendarComponent extends PureComponent {
         el.style.backgroundRepeat = `no-repeat`;
       }
     }
+    else {
+      el.style.background = event.def.extendedProps.color;
+    }
   };
+
+  eventReceive = async ({ event, draggedEl }) => {
+    console.log(event, draggedEl);
+
+    const payload = this.formatEventForDB(event.start, event.extendedProps.indslagid);
+    const { data } = await WebAPI.addEvent(payload);
+
+    this.addToLog("Add", event);
+
+    event.setProp("id", data);
+    event.setProp("color", getColor(event.extendedProps.sf_kategori, event.extendedProps.indslagtypeid));
+
+    /*
+    event.setProp("recurringDef", { duration: { days: 0, milliseconds: 1740000, months: 0, years: 0 }, typeData: { daysOfWeek: [2], startTime: { days: 0, milliseconds: 36300000, months: 0, years: 0 }, endTime: { days: 0, milliseconds: 38040000, months: 0, years: 0 } }, typeId: 0 });
+    */
+
+
+    this.addCurrentEventsToActions();
+  }
 
   drop = async ({ date, draggedEl }) => {
 
-    const properties = JSON.parse(draggedEl.dataset.event);
+    console.log("drop");
+
+
 
     // Avoid overlap
+    /*
     const events = this.calendar.getEvents();
     const dateEnd = addSeconds(date, properties.sf_varighedsec);
 
@@ -313,13 +296,8 @@ class CalendarComponent extends PureComponent {
         return;
       }
     }
-    const payload = this.formatEventForDB(date, properties.video_id);
-    const { data } = await axios.post(`/v2/events`, payload);
+    */
 
-    const event = this.createEvent({ id: data, start: date, extendedProps: properties });
-    this.addToLog("Add", event);
-    this.calendar.addEvent(event);
-    this.addCurrentEventsToActions();
 
   };
 
@@ -355,9 +333,12 @@ class CalendarComponent extends PureComponent {
         sf_varighedsec: event.sf_varighedsec,
         video_id: event.indslagid,
         fav: 0,
-        level: event.sf_level,
+        sf_level: event.sf_level,
         rendering: !isARule ? '' : 'background',
-        language: getLanguage(event)
+        language: event.language,
+        languageShort: event.languageShort,
+        color: getColor(event.sf_kategori, event.indslagtypeid)
+
       };
       if (isARule) {
         rules.push({ startTime: event.start, endTime: end, id: event.id, daysOfWeek: [event.day_of_week] });
@@ -577,7 +558,7 @@ class CalendarComponent extends PureComponent {
       update: opts.update.map(event => ({ id: event.id, ...this.formatEventForDB(event.start, event.extendedProps.video_id) }))
     });
 
-    console.log("compareArrs",opts);
+    console.log("compareArrs", opts);
     this.setState({ loading: false });
     return opts;
   }
@@ -736,12 +717,15 @@ class CalendarComponent extends PureComponent {
       start: event ? format(event.start, "YYYY-MM-dd HH:mm:ss") : "--"
     };
     const log = [...this.state.log, msg];
+    /*
     if (!this.state.logId) {
       const result = await axios.post(`/v2/event/logs`, log);
       this.setState({ logId: result.data });
     } else {
       axios.put(`/v2/event/logs/${this.state.logId}`, log);
     }
+    */
+
     this.setState({ log });
   };
 
@@ -750,16 +734,21 @@ class CalendarComponent extends PureComponent {
     this.setState({ isLogOpen: !this.state.isLogOpen });
   };
 
-  handleSettingChange = (name, value) => {
-    this.setState(prevState => {
+  handleSettingChange = async (name, value) => {
+    await this.setState(prevState => {
       const newState = { ...prevState };
       const settings = { ...newState.settings };
       settings[name] = value;
       newState.settings = settings;
       return newState;
     })
-    const val = this.applySettingsOnCalendar(name, value);
-    this.calendar.setOption(name, val);
+    if (name === 'slotLabelFormat' || name === 'firstDay') {
+      const val = this.applySettingsOnCalendar(name, value);
+      this.calendar.setOption(name, val);
+    }
+    if (name === 'showThumbnail') {
+      this.calendar.rerenderEvents();
+    }
   }
 
   applySettingsOnCalendar = (name, value) => {
@@ -882,7 +871,7 @@ class CalendarComponent extends PureComponent {
             deleteCalendar={this.deleteCalendar}
           />
         }
-        <CalendarContainer className="calendar-container" style={{ marginLeft: isDrawerOpen && !iframe ? 300 : 0 }}>
+        <div className="calendar-container" style={{ marginLeft: isDrawerOpen && !iframe ? 300 : 0 }}>
           {!iframe && <CalendarTopBar
             isDrawerOpen={isDrawerOpen}
             aIndex={aIndex}
@@ -896,8 +885,8 @@ class CalendarComponent extends PureComponent {
             undoHandler={this.undoHandler}
             toggleDrawerHandler={this.toggleDrawerHandler} />
           }
-          <CalendarDiv id="calendar" innerRef={this.refCalendar} style={{ marginTop: iframe ? 20 : 0 }} />
-        </CalendarContainer>
+          <div id="calendar" ref={this.refCalendar} style={{ marginTop: iframe ? 20 : 0 }} />
+        </div>
 
         <EventPopover
           selectedEventDetails={selectedEventDetails}

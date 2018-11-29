@@ -56,6 +56,12 @@
   color: black;
 }
 
+.list-item-text--wrap span {
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
 @keyframes ringing {
   0%,
   100% {
@@ -76,8 +82,54 @@
   }
 }
 
+.fc-content { 
+  line-height: 12px;
+}
+
+
+.fc-event {
+  padding: 3px;
+  background: black;
+  border-color: black;
+}
+
+.fc-event .fc-bg {
+  opacity: 0;
+}
+
+.fc-title {
+  background: black;
+  font-size: 10px;
+  display: inline;
+}
+
+.fc-event .fc-time {
+  background: cornflowerblue;
+  width: fit-content;
+  font-size: 10px;
+}
+
 .loading-modal .MuiPaper-root-12 {
   animation: 2s ringing infinite;
+}
+
+.calendar-container {
+  height: calc(100vh - 80px);
+  margin-left: 300px;
+  transition: margin 225ms cubic-bezier(0, 0, 0.2, 1) 0ms;
+  padding: 0 20px;
+}
+
+.class-wrapper {
+  overflow: auto;
+  height: 100%;
+}
+
+.top-drawer-div {
+  display: flex !important;
+  padding: 0 20px !important;
+  justify-content: space-between !important;
+  align-items: center;
 }
 
 @media (max-width: 600px) {
@@ -87,5 +139,10 @@
   }
   #toolbar {
     flex-flow: row wrap;
+  }
+  .calendar-container{
+    margin-left: 0 !important;
+    height: auto;
+    min-height: 100vh;
   }
 }

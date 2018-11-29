@@ -33,7 +33,7 @@ export default function EventPopover(props) {
     const { selectedEvent, selectedEventDetails, type } = props;
 
     let levelSvg = null;
-    switch (selectedEventDetails.extendedProps.level) {
+    switch (selectedEventDetails.extendedProps.sf_level) {
         case 'Beginner':
             levelSvg = <SignalCellular1Bar />;
             break;
@@ -76,7 +76,7 @@ export default function EventPopover(props) {
                             <Avatar>
                                 {levelSvg}
                             </Avatar>
-                            <ListItemText primary={selectedEventDetails.extendedProps.level} />
+                            <ListItemText primary={selectedEventDetails.extendedProps.sf_level} />
                         </ListItem>
                     </List>
                     {type === "advanced" && (

@@ -17,7 +17,8 @@ import {
   ListItem,
   ListItemIcon,
   ListItemText,
-  Paper
+  Paper,
+  Switch
 } from "@material-ui/core";
 
 import { Accessibility, SaveAlt } from "@material-ui/icons";
@@ -86,6 +87,9 @@ export default class SettingsDialog extends PureComponent {
             <Grid item>
               <Button color="primary" onClick={() => this.props.setView('01:00:00', '23:30:00')} variant="contained" style={{ marginRight: 5 }}>24 hour view</Button>
               <Button color="primary" onClick={() => this.props.setView('03:00:00', '21:00:00')} variant="contained">{this.props.settings.slotLabelFormat === 'ampm' ? '3AM - 9PM' : '03:00 - 21:00'}</Button>
+            </Grid>
+            <Grid item>
+              <FormControlLabel control={<Switch color="primary" checked={this.props.settings.showThumbnail} onChange={(_, checked) => this.props.handleSettingChange('showThumbnail', checked)} />} label="Show thumbnails on calendar instances" />
             </Grid>
           </Grid>
         </DialogContent>
