@@ -265,14 +265,25 @@ class CalendarComponent extends PureComponent {
 
   eventReceive = async ({ event, draggedEl }) => {
     console.log(event, draggedEl);
+    event.remove();
 
     const payload = this.formatEventForDB(event.start, event.extendedProps.indslagid);
     const { data } = await WebAPI.addEvent(payload);
 
     this.addToLog("Add", event);
 
-    event.setProp("id", data);
-    event.setProp("color", getColor(event.extendedProps.sf_kategori, event.extendedProps.indslagtypeid));
+    console.log("id", data);
+    const props = {
+      start: event.start,
+      title: event.title,
+      color: getColor(event.extendedProps.sf_kategori, event.extendedProps.indslagtypeid),
+      extendedProps: event.extendedProps
+    };
+    const newEvent = this.createEvent({ ...props, id: data });
+
+    this.calendar.addEvent(newEvent);
+
+
 
     /*
     event.setProp("recurringDef", { duration: { days: 0, milliseconds: 1740000, months: 0, years: 0 }, typeData: { daysOfWeek: [2], startTime: { days: 0, milliseconds: 36300000, months: 0, years: 0 }, endTime: { days: 0, milliseconds: 38040000, months: 0, years: 0 } }, typeId: 0 });
@@ -356,13 +367,15 @@ class CalendarComponent extends PureComponent {
 
 
   createEvent = (event) => {
+    console.log("createEvent", event);
     const obj = {
       id: event.id,
-      title: event.title,
+      title: event.title ? event.title : event.sf_engelsktitel,
       startTime: format(event.start, 'HH:mm'),
       endTime: event.end ? format(event.end, 'HH:mm') : format(addSeconds(event.start, event.extendedProps.sf_varighedsec), 'HH:mm'),
       daysOfWeek: [event.daysOfWeek !== undefined ? event.daysOfWeek : getDay(event.start)],
       startEditable: true,
+      color: event.color ? event.color : '',
       rendering: event.extendedProps.video_id === 9999 ? 'background' : '',
       ...event.extendedProps
     }
