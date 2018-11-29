@@ -2,7 +2,6 @@ import React, { PureComponent } from 'react'
 import { Dialog, Card, CardMedia, Stepper, Step, StepLabel, CardContent, IconButton, Button } from '@material-ui/core';
 import { Close } from "@material-ui/icons";
 
-
 function getSteps() {
     return ['Welcome', 'More simple', 'Better experience', 'Optional new features'];
 }
@@ -17,6 +16,19 @@ function getStepContent(step) {
             return <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Fugit totam rerum, officia placeat sequi ex laboriosam hic corporis sint in!</p>
         case 3:
             return <p>Lorem ipsum dolor sit amet.</p>
+    }
+}
+
+function getImg(step) {
+    switch (step) {
+        case 0:
+            return 'https://www.welltodoglobal.com/wp-content/uploads/2016/08/13528519_1403797416302206_8257769746736443972_o.jpg';
+        case 1:
+            return 'https://res.cloudinary.com/dcbbunxhy/image/upload/q_auto/v1543495634/add-event.gif';
+        case 2:
+            return 'https://res.cloudinary.com/dcbbunxhy/image/upload/q_auto/v1543495635/change-calendar.gif';
+        case 3:
+            return 'https://res.cloudinary.com/dcbbunxhy/image/upload/q_auto/v1543495635/features.gif';
     }
 }
 
@@ -35,17 +47,19 @@ export default class OnBoardingDialog extends PureComponent {
 
         const stepContent = getStepContent(this.state.activeStep);
 
+        const img = getImg(this.state.activeStep);
+
         return (
             <Dialog open={this.props.open}>
                 <Card>
                     <div>
-                        <CardMedia component="img" src={'https://www.welltodoglobal.com/wp-content/uploads/2016/08/13528519_1403797416302206_8257769746736443972_o.jpg'} height={200} style={{ objectFit: 'cover' }}>
+                        <CardMedia component="img" src={img} height={200} style={{ objectFit: 'cover', objectPosition: 'top' }}>
                         </CardMedia>
                         <IconButton className="dialog-close-btn" onClick={this.props.toggle}>
                             <Close />
                         </IconButton>
                     </div>
-                    <CardContent style={{ textAlign: 'center', height: '150px' }}>
+                    <CardContent style={{ textAlign: 'center', height: '100px' }}>
                         {stepContent}
                     </CardContent>
                     <div style={{ textAlign: 'center' }}>
