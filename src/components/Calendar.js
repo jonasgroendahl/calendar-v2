@@ -10,6 +10,7 @@ import WebAPI from "../utils/WebAPI";
 import XlsExport from 'xlsexport';
 import Loadable from "react-loadable";
 import { getColor } from "../utils/functions";
+import OnBoardingDialog from "./OnBoardingDialog/OnBoardingDialog";
 
 const LeftDrawer = Loadable({
   loader: () => import('./LeftDrawer/LeftDrawer'),
@@ -56,6 +57,7 @@ class CalendarComponent extends PureComponent {
       isDrawerOpen: true,
       isTypeDialogOpen: false,
       isCalendarDialogOpen: false,
+      isOnBoardingDialogOpen: true,
       isOpen: false,
       isLogOpen: false,
       isReplacing: false,
@@ -819,8 +821,11 @@ class CalendarComponent extends PureComponent {
   }
 
   clickAway = () => {
-
     this.setState({ anchorMoreBtn: null });
+  }
+
+  toggleOnBoardingDialog = () => {
+    this.setState({ isOnBoardingDialogOpen: !this.state.isOnBoardingDialogOpen });
   }
 
 
@@ -934,10 +939,11 @@ class CalendarComponent extends PureComponent {
             </IconButton>
           }
         />
-        <LoadingModal show={calendarLoading} />
+        <LoadingModal show={calendarLoading && !this.state.isOnBoardingDialogOpen} />
         {isLogOpen && (
           <Log log={log} show={isLogOpen} toggleLog={this.toggleLog} />
         )}
+        <OnBoardingDialog open={this.state.isOnBoardingDialogOpen} toggle={this.toggleOnBoardingDialog} />
       </div>
     );
   }

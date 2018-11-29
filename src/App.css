@@ -132,6 +132,13 @@
   align-items: center;
 }
 
+.dialog-close-btn {
+  position: absolute !important;
+  top: 0;
+  right: 0;
+  color: white !important;
+}
+
 @media (max-width: 600px) {
   #leftdrawer > div {
     position: static;
