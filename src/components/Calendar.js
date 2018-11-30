@@ -59,6 +59,7 @@ class CalendarComponent extends PureComponent {
       isTypeDialogOpen: false,
       isCalendarDialogOpen: false,
       isOnBoardingDialogOpen: true,
+      isRuleDialogOpen: false,
       isOpen: false,
       isLogOpen: false,
       isReplacing: false,
@@ -75,7 +76,9 @@ class CalendarComponent extends PureComponent {
         { name: "Les Mills Schedule", id: 41 }
       ],
       rules: [],
-      players: [{ name: "Les Mills Player", id: 43, calendar_id: 41 }],
+      players: [
+        { name: "Les Mills Player", id: 43, calendar_id: 41 }
+      ],
       type: "simple",
       view: "agendaWeek",
       showEventType: 0,
@@ -88,14 +91,15 @@ class CalendarComponent extends PureComponent {
       settings: {
         firstDay: '0',
         slotLabelFormat: 'ampm',
-        showThumbnail: true
+        showThumbnail: true,
+        allDay: true
       },
       gymId: 3163,
       iframe: false,
       rule: {
         start: new Date(),
         end: new Date(),
-        day: 1
+        day: '1'
       }
     };
   }
@@ -694,7 +698,12 @@ class CalendarComponent extends PureComponent {
     return diff;
   }
 
-  addRule = async (day, start, end) => {
+  addRule = async () => {
+    const { day } = this.state.rule;
+
+    const start = format(this.state.rule.start, 'HH:mm');
+    const end = format(this.state.rule.end, 'HH:mm');
+
     const duration = this.calculateEndDate(start, end);
 
     const { data } = await WebAPI.addEvent({
@@ -716,6 +725,7 @@ class CalendarComponent extends PureComponent {
     const rules = [...this.state.rules, { ...event }];
     this.setState({ rules });
     this.calendar.addEvent(event);
+    this.toggleRuleDialog();
   };
 
 
@@ -844,6 +854,7 @@ class CalendarComponent extends PureComponent {
   }
 
   toggleOnBoardingDialog = () => {
+    console.log('hi');
     this.setState({ isOnBoardingDialogOpen: !this.state.isOnBoardingDialogOpen });
   }
 
@@ -852,6 +863,7 @@ class CalendarComponent extends PureComponent {
   }
 
   handleRuleChange = (name, value) => {
+    console.log(name, value);
     const rule = { ...this.state.rule };
     rule[name] = value;
     this.setState({ rule });
@@ -951,6 +963,7 @@ class CalendarComponent extends PureComponent {
           exportToCSV={this.exportToCSV}
           exportToIframe={this.exportToIframe}
           setView={this.setView}
+          toggle={this.toggleOnBoardingDialog}
         />
         <ActionList
           anchorEl={this.state.anchorMoreBtn}
@@ -975,7 +988,13 @@ class CalendarComponent extends PureComponent {
           <Log log={log} show={isLogOpen} toggleLog={this.toggleLog} />
         )}
         <OnBoardingDialog open={this.state.isOnBoardingDialogOpen} toggle={this.toggleOnBoardingDialog} />
-        <RuleDialog open={isRuleDialogOpen} rule={this.state.rule} toggle={this.toggleRuleDialog} settings={settings} handleRuleChange={this.handleRuleChange} />
+        <RuleDialog
+          open={isRuleDialogOpen}
+          rule={this.state.rule}
+          toggle={this.toggleRuleDialog}
+          settings={settings}
+          handleRuleChange={this.handleRuleChange}
+          addRule={this.addRule} />
       </div>
     );
   }

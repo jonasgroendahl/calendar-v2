@@ -10,14 +10,14 @@ export default function RuleDialog(props) {
 
     const days = generateDays();
     return (
-        <Dialog open={props.open}>
+        <Dialog open={props.open} onClose={props.toggle}>
             <Card>
                 <CardMedia component="img" height={200} src={'https://res.cloudinary.com/dcbbunxhy/image/upload/c_scale,q_auto,w_904/v1543573872/Kafnu-16.jpg'} style={{ objectFit: 'cover' }} />
                 <CardContent className="flex column">
                     <p>Rule: Disable On Demand</p>
                     <RadioGroup value={props.rule.day} row name="day" onChange={(event, value) => props.handleRuleChange('day', value)}>
                         {days.map((day, index) => {
-                            return <FormControlLabel label={day} value={index} control={<Radio color="primary" />} />
+                            return <FormControlLabel key={`day_${day}`} label={day} value={index.toString()} control={<Radio color="primary" />} />
                         })}
                     </RadioGroup>
                     <TimePicker

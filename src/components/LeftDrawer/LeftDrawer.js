@@ -6,7 +6,7 @@ import {
   Search, ChevronLeft, Videocam, Person, NotificationsActive, Clear, Event, Delete, PriorityHigh, ExpandMore, Info, Star
 } from "@material-ui/icons";
 import { Draggable } from "fullcalendar";
-import { format } from "date-fns";
+import { format, setDay } from "date-fns";
 import { levels, categories } from "../static";
 import MenuIcon from "@material-ui/icons/Menu";
 
@@ -49,7 +49,6 @@ export default class LeftDrawer extends PureComponent {
     if (prevProps.content.length === 0 && this.props.content.length > 0) {
       let providers = [];
       let languages = [];
-      console.log(this.ClassWrapperRef.current);
       this.props.content.forEach((cl, index) => {
         if (languages.indexOf(cl.language) === -1) {
           languages.push(cl.language);
@@ -68,9 +67,7 @@ export default class LeftDrawer extends PureComponent {
       new Draggable(this.ClassWrapperRef.current, {
         itemSelector: ".event",
         eventData: (eventEl) => {
-          console.log(eventEl.getAttribute('video_id'));
           const eventData = this.props.content.find(cl => cl.indslagid === parseInt(eventEl.getAttribute('video_id'), 10));
-          console.log(eventData);
           return {
             title: eventData.sf_engelsktitel,
             duration: eventData.sf_varighed,
@@ -239,7 +236,8 @@ export default class LeftDrawer extends PureComponent {
   }
 
   mapDay = day => {
-    return format(new Date().setDay(day), 'dddd');
+    const date = setDay(new Date(), parseInt(day, 10));
+    return format(date, 'EEEE');
   };
 
   toggleClassMenu = (event) => {

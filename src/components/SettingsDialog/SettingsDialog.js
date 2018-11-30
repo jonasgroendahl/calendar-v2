@@ -28,6 +28,11 @@ export default class SettingsDialog extends PureComponent {
     this.setState({ [event.target.name]: event.target.checked });
   };
 
+  toggle = () => {
+    this.props.toggleSettingsMenu();
+    this.props.toggle();
+  }
+
   render() {
 
     return (
@@ -85,8 +90,7 @@ export default class SettingsDialog extends PureComponent {
               </Card>
             </Grid>
             <Grid item>
-              <Button color="primary" onClick={() => this.props.setView('01:00:00', '23:30:00')} variant="contained" style={{ marginRight: 5 }}>24 hour view</Button>
-              <Button color="primary" onClick={() => this.props.setView('03:00:00', '21:00:00')} variant="contained">{this.props.settings.slotLabelFormat === 'ampm' ? '3AM - 9PM' : '03:00 - 21:00'}</Button>
+              <FormControlLabel control={<Switch color="primary" checked={this.props.settings.allDay} onChange={(_, value) => this.props.handleSettingChange('allDay', value)} />} label="24 hour clock" />
             </Grid>
             <Grid item>
               <FormControlLabel control={<Switch color="primary" checked={this.props.settings.showThumbnail} onChange={(_, checked) => this.props.handleSettingChange('showThumbnail', checked)} />} label="Show thumbnails on calendar instances" />
@@ -94,6 +98,7 @@ export default class SettingsDialog extends PureComponent {
           </Grid>
         </DialogContent>
         <DialogActions>
+          <Button onClick={this.toggle}>Show onboarding dialog</Button>
           <Button onClick={this.props.toggleSettingsMenu}>
             Cancel
           </Button>
