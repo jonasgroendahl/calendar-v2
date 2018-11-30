@@ -11,6 +11,7 @@ import XlsExport from 'xlsexport';
 import Loadable from "react-loadable";
 import { getColor } from "../utils/functions";
 import OnBoardingDialog from "./OnBoardingDialog/OnBoardingDialog";
+import RuleDialog from "./RuleDialog/RuleDialog";
 
 const LeftDrawer = Loadable({
   loader: () => import('./LeftDrawer/LeftDrawer'),
@@ -90,7 +91,12 @@ class CalendarComponent extends PureComponent {
         showThumbnail: true
       },
       gymId: 3163,
-      iframe: false
+      iframe: false,
+      rule: {
+        start: new Date(),
+        end: new Date(),
+        day: 1
+      }
     };
   }
 
@@ -841,6 +847,16 @@ class CalendarComponent extends PureComponent {
     this.setState({ isOnBoardingDialogOpen: !this.state.isOnBoardingDialogOpen });
   }
 
+  toggleRuleDialog = () => {
+    this.setState({ isRuleDialogOpen: !this.state.isRuleDialogOpen });
+  }
+
+  handleRuleChange = (name, value) => {
+    const rule = { ...this.state.rule };
+    rule[name] = value;
+    this.setState({ rule });
+  };
+
 
   render() {
     const {
@@ -855,6 +871,7 @@ class CalendarComponent extends PureComponent {
       selectedCalendar,
       isCalendarDialogOpen,
       isReplacing,
+      isRuleDialogOpen,
       calendars,
       rules,
       log,
@@ -887,6 +904,7 @@ class CalendarComponent extends PureComponent {
             settings={settings}
             content={content}
             deleteCalendar={this.deleteCalendar}
+            toggleRuleDialog={this.toggleRuleDialog}
           />
         }
         <div className="calendar-container" style={{ marginLeft: isDrawerOpen && !iframe ? 300 : 0 }}>
@@ -957,6 +975,7 @@ class CalendarComponent extends PureComponent {
           <Log log={log} show={isLogOpen} toggleLog={this.toggleLog} />
         )}
         <OnBoardingDialog open={this.state.isOnBoardingDialogOpen} toggle={this.toggleOnBoardingDialog} />
+        <RuleDialog open={isRuleDialogOpen} rule={this.state.rule} toggle={this.toggleRuleDialog} settings={settings} handleRuleChange={this.handleRuleChange} />
       </div>
     );
   }

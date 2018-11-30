@@ -1,12 +1,11 @@
 import React, { PureComponent, Fragment } from "react";
 import {
-  Drawer, List, IconButton, Grid, TextField, Divider, ListItem, Select, MenuItem, BottomNavigation, BottomNavigationAction, FormControl, InputLabel, Avatar, ListItemText, Card, ListItemIcon, Tooltip, Button, CardActions, Popper, ClickAwayListener, ListItemSecondaryAction, ExpansionPanel, ExpansionPanelSummary, Typography, ExpansionPanelDetails, FormControlLabel, Switch, Input, OutlinedInput, Menu
+  Drawer, List, IconButton, Grid, TextField, Divider, ListItem, Select, MenuItem, BottomNavigation, BottomNavigationAction, FormControl, InputLabel, Avatar, ListItemText, Card, ListItemIcon, Tooltip, Button, CardActions, Popper, ClickAwayListener, ListItemSecondaryAction, ExpansionPanel, ExpansionPanelSummary, Typography, ExpansionPanelDetails, FormControlLabel, Switch, Input, OutlinedInput, Menu, ListItemAvatar
 } from "@material-ui/core";
 import {
   Search, ChevronLeft, Videocam, Person, NotificationsActive, Clear, Event, Delete, PriorityHigh, ExpandMore, Info, Star
 } from "@material-ui/icons";
 import { Draggable } from "fullcalendar";
-import { TimePicker } from "material-ui-pickers";
 import { format } from "date-fns";
 import { levels, categories } from "../static";
 import MenuIcon from "@material-ui/icons/Menu";
@@ -34,11 +33,6 @@ export default class LeftDrawer extends PureComponent {
     anchorElCalendar: null,
     anchorElClass: null,
     view: "CLASS_OVERVIEW",
-    rule: {
-      start: new Date(),
-      end: new Date(),
-      day: 1
-    },
     ruleEnd: new Date(),
     startIsSet: false,
     isTimePickerVisible: false,
@@ -226,12 +220,6 @@ export default class LeftDrawer extends PureComponent {
     }
   };
 
-  handleRuleChange = event => {
-    const rule = { ...this.state.rule };
-    rule[event.target.name] = event.target.value;
-    this.setState({ rule });
-  };
-
   addRule = () => {
     const { rule } = this.state;
     const newRule = {
@@ -269,7 +257,6 @@ export default class LeftDrawer extends PureComponent {
       replacing,
       anchorElCalendar,
       view,
-      rule,
       showFavorites,
       providers,
       languages,
@@ -327,7 +314,7 @@ export default class LeftDrawer extends PureComponent {
                     ? "Select a class to replace this one ..."
                     : c === replacing.to
                       ? "Replacing with this class ..."
-                      : `Lang: ${c.language}`
+                      : `${c.language}`
                 }
                 className="list-item-text--wrap"
               />
@@ -646,50 +633,18 @@ export default class LeftDrawer extends PureComponent {
               }
               {view !== 'CLASS_OVERVIEW' &&
                 <Fragment>
-                  <ExpansionPanel elevation={0}>
-                    <ExpansionPanelSummary expandIcon={<ExpandMore />}>
-                      <div className="flex center">
-                        <Tooltip title="Rule: Disable OnDemand allows you to select timeframes where users may not be able to start OnDemand classes">
-                          <Info style={{ marginRight: 10 }} />
-                        </Tooltip>
-                        <span>Disable On Demand</span>
-                      </div>
-                    </ExpansionPanelSummary>
-                    <ExpansionPanelDetails className="flex column">
-                      <FormControl>
-                        <InputLabel htmlFor="day">Day</InputLabel>
-                        <Select
-                          value={rule.day}
-                          disableUnderline
-                          onChange={this.handleRuleChange}
-                          name="day"
-                          input={<Input id="day" />}
-                        >
-                          <MenuItem value={1}>Monday</MenuItem>
-                          <MenuItem value={2}>Tuesday</MenuItem>
-                          <MenuItem value={3}>Wednesday</MenuItem>
-                          <MenuItem value={4}>Thursday</MenuItem>
-                          <MenuItem value={5}>Friday</MenuItem>
-                          <MenuItem value={6}>Saturday</MenuItem>
-                          <MenuItem value={0}>Sunday</MenuItem>
-                        </Select>
-                      </FormControl>
-                      <TimePicker label="Start time" value={rule.start} ampm={this.props.settings.slotLabelFormat === 'ampm'} onChange={(start, t, x) => {
-                        const rule = { ...this.state.rule };
-                        rule.start = start;
-                        this.setState({ rule });
-                      }} />
-                      <TimePicker label="End time" value={rule.end} ampm={this.props.settings.slotLabelFormat === 'ampm'} onChange={(end, t, x) => {
-                        const rule = { ...this.state.rule };
-                        rule.end = end;
-                        this.setState({ rule });
-                      }} />
-                      <Button color="primary" onClick={this.addRule}>
-                        Add rule
-              </Button>
-                    </ExpansionPanelDetails>
-                  </ExpansionPanel>
-                </Fragment>}
+                  <ListItem button onClick={this.props.toggleRuleDialog}>
+                    <ListItemAvatar>
+                      <Tooltip title="Rule: Disable OnDemand allows you to select timeframes where users may not be able to start OnDemand classes">
+                        <Avatar>
+                          <Info />
+                        </Avatar>
+                      </Tooltip>
+                    </ListItemAvatar>
+                    <ListItemText primary="Disable On Demand" />
+                  </ListItem>
+                </Fragment>
+              }
               <div className="class-wrapper" ref={this.ClassWrapperRef}>
                 {classes}
               </div>
